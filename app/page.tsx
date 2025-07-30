@@ -10,6 +10,9 @@ import { FleetSection } from "./compoennts/FleetSection";
 import OurTeamSection from "./compoennts/OurTeamSection";
 import Footer from "./compoennts/Footer";
 import ReviewsSection from "./compoennts/ReviewsSection";
+import WhyChooseSection from "./compoennts/WhyChooseSection";
+import FAQSection from "./compoennts/FAQSection";
+import SpecialEventsSection from "./compoennts/SpecialEventsSection";
 
 export default function Home() {
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
@@ -39,8 +42,11 @@ export default function Home() {
       <HeroSection setIsBookingModalOpen={setIsBookingModalOpen} />
       <SkillsSection />
       <FleetSection />
+      <WhyChooseSection />
+      <SpecialEventsSection />
       <OurTeamSection />
       <ReviewsSection />
+      <FAQSection />
       <Footer />
     </div>
   );

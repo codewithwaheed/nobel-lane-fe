@@ -29,11 +29,11 @@ export default function HeroSection({
                 Premium Executive
               </span>
               <br className="sm:block" />
-              Transport in Dallas-Fort Worth
+              Car Service in Dallas-Fort Worth
             </h1>
             <p className="text-md lg:text-2xl md:text-xl text-gray-200 leading-relaxed">
-              An AI engine, with a human at the wheel. Experience the future of
-              executive ground transportation.
+              AI-powered luxury transportation with professional chauffeurs.
+              Experience the future of executive ground transportation in DFW.
             </p>
 
             <Button

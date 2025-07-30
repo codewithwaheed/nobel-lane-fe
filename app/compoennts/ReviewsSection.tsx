@@ -159,10 +159,10 @@ const ReviewsSection: React.FC = () => {
       <div className="container px-4 mx-auto relative">
         <div className="flex justify-center text-center mb-6 lg:mb-12">
           <div className="max-w-lg">
-            <h2 className="text-3xl leading-none md:text-[45px] font-bold mb-6">
+            <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold mb-6">
               What Our Clients Say
             </h2>
-            <p className="text-lg opacity-80">
+            <p className="text-base md:text-lg lg:text-xl text-gray-600 dark:text-gray-400">
               Discover why executives and professionals choose our premium
               transportation service for their important journeys.
             </p>

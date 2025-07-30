@@ -1,20 +1,6 @@
-import type { Metadata } from "next";
-import { Poppins, Crimson_Text } from "next/font/google";
-import "./globals.css";
+import { Metadata } from "next";
 
-const poppins = Poppins({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-  weight: ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
-});
-
-const crimsonText = Crimson_Text({
-  variable: "--font-crimson",
-  subsets: ["latin"],
-  weight: ["400", "600", "700"],
-});
-
-export const metadata: Metadata = {
+export const siteMetadata: Metadata = {
   title: "Executive Car Service Dallas | Luxury Chauffeur DFW | Noble Lane",
   description:
     "Noble Lane offers premium executive car service in Dallas-Fort Worth. AI-powered booking, luxury vehicles, professional chauffeurs, and real-time flight tracking for VIP clients.",
@@ -27,6 +13,10 @@ export const metadata: Metadata = {
     "executive transportation Dallas",
     "luxury car service DFW airport",
     "professional chauffeur Dallas",
+    "corporate transportation DFW",
+    "airport transportation Dallas",
+    "business car service",
+    "Noble Lane transportation",
   ],
   authors: [{ name: "Noble Lane Executive Transportation" }],
   creator: "Noble Lane",
@@ -72,20 +62,8 @@ export const metadata: Metadata = {
       "msvalidate.01": "your-bing-verification-code",
     },
   },
+  alternates: {
+    canonical: "https://noblelane.com",
+  },
+  category: "Transportation",
 };
-
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
-  return (
-    <html lang="en">
-      <body
-        className={`${poppins.variable} ${crimsonText.variable} antialiased font-sans`}
-      >
-        {children}
-      </body>
-    </html>
-  );
-}
