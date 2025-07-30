@@ -115,7 +115,7 @@ export function BookingForm({ isModal = false }: { isModal?: boolean }) {
               form.setValue("duration", "");
             }}
             className={cn(
-              "flex-1 py-2 px-4 rounded-md font-medium transition-colors",
+              "flex-1 py-2 px-4 rounded-md font-medium transition-colors cursor-pointer",
               tripType === "one-way"
                 ? "bg-primary text-white"
                 : "bg-gray-200 text-gray-700 hover:bg-gray-300"
@@ -131,7 +131,7 @@ export function BookingForm({ isModal = false }: { isModal?: boolean }) {
               form.setValue("to", "");
             }}
             className={cn(
-              "flex-1 py-2 px-4 rounded-md font-medium transition-colors",
+              "flex-1 py-2 px-4 rounded-md font-medium transition-colors cursor-pointer",
               tripType === "by-the-hour"
                 ? "bg-primary text-white"
                 : "bg-gray-200 text-gray-700 hover:bg-gray-300"

@@ -48,7 +48,7 @@ for maximum efficiency.`,
 export default function SkillsSection() {
   return (
     <div className="max-w-7xl mx-auto px-4 py-12 my-10">
-      <h1 className="text-2xl md:text-4xl text-center font-bold mb-3">
+      <h1 className="text-2xl md:text-4xl text-center font-bold mb-4">
         Technology Meets Human Excellence
       </h1>
       <p className="text-gray-600 md:text-xl text-center mt-2 mb-8  md:max-w-3xl mx-auto">
@@ -74,7 +74,7 @@ export default function SkillsSection() {
               <h4 className="text-lg md:text-xl font-semibold mb-3">
                 {skill.name}
               </h4>
-              <p className="text-sm md:text-base text-gray-600 text-wrap">
+              <p className="text-sm md:text-base text-gray-600 text-wrap ">
                 {skill.description}
               </p>
             </div>

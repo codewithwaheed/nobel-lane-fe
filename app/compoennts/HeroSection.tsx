@@ -25,10 +25,10 @@ export default function HeroSection({
         <div className="flex-1 flex items-center justify-center p-6 lg:p-12">
           <div className="max-w-xl w-full text-center lg:text-left">
             <h1 className="text-2xl md:text-4xl lg:text-5xl font-bold mb-4 md:mb-6 text-white leading-tight">
-              <span className="md:bg-primary-linear text-nowrap text-primary-foreground px-2 py-1 mr- rounded-md">
+              <span className="md:bg-primary-linear text-nowrap text-primary-foreground px-2 py-1 mr-2 rounded-md">
                 Premium Executive
               </span>
-              {/* <br className="hidden sm:block" /> */}
+              <br className="sm:block" />
               Transport in Dallas-Fort Worth
             </h1>
             <p className="text-md lg:text-2xl md:text-xl text-gray-200 leading-relaxed">

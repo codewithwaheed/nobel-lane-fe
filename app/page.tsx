@@ -6,6 +6,10 @@ import { Dialog, DialogPanel } from "@headlessui/react";
 import { BookingForm } from "./compoennts/BookingForm";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import SkillsSection from "./compoennts/SkillsSection";
+import { FleetSection } from "./compoennts/FleetSection";
+import OurTeamSection from "./compoennts/OurTeamSection";
+import Footer from "./compoennts/Footer";
+import ReviewsSection from "./compoennts/ReviewsSection";
 
 export default function Home() {
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
@@ -34,6 +38,10 @@ export default function Home() {
       <Header setIsBookingModalOpen={setIsBookingModalOpen} />
       <HeroSection setIsBookingModalOpen={setIsBookingModalOpen} />
       <SkillsSection />
+      <FleetSection />
+      <OurTeamSection />
+      <ReviewsSection />
+      <Footer />
     </div>
   );
 }
