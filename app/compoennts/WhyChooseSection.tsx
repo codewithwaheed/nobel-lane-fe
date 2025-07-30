@@ -1,6 +1,7 @@
 import React from "react";
 import { Shield, Clock, Star, Zap } from "lucide-react";
 
+// Force Vercel rebuild - spacing fix deployment
 const WhyChooseSection: React.FC = () => {
   return (
     <section className="py-16 md:py-24 bg-white dark:bg-gray-900">
@@ -26,7 +27,7 @@ const WhyChooseSection: React.FC = () => {
           <div className="grid md:grid-cols-2 gap-6 mb-16">
             <div className="flex flex-col space-y-6">
               <div className="bg-white dark:bg-gray-800 p-4 md:p-6 rounded-lg shadow-md border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-750 transition duration-200 flex-1 lg:h-[200px]">
-                <div className="flex flex-col md:flex-row md:items-start space-y-4 md:space-y-0 md:space-x-4 lg:space-x-6">
+                <div className="flex flex-col md:flex-row md:items-start space-y-4 md:space-y-0 md:space-x-4 lg:space-x-6 lg:gap-6">
                   <div className="flex-shrink-0 w-12 h-12 bg-gradient-to-r from-yellow-400 to-yellow-600 rounded-lg flex items-center justify-center mx-auto md:mx-0">
                     <Zap className="w-6 h-6 text-white" />
                   </div>
@@ -45,7 +46,7 @@ const WhyChooseSection: React.FC = () => {
               </div>
 
               <div className="bg-white dark:bg-gray-800 p-4 md:p-6 rounded-lg shadow-md border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-750 transition duration-200 flex-1 lg:h-[200px]">
-                <div className="flex flex-col md:flex-row md:items-start space-y-4 md:space-y-0 md:space-x-4 lg:space-x-6">
+                <div className="flex flex-col md:flex-row md:items-start space-y-4 md:space-y-0 md:space-x-4 lg:space-x-6 lg:gap-6">
                   <div className="flex-shrink-0 w-12 h-12 bg-gradient-to-r from-yellow-400 to-yellow-600 rounded-lg flex items-center justify-center mx-auto md:mx-0">
                     <Clock className="w-6 h-6 text-white" />
                   </div>
@@ -66,7 +67,7 @@ const WhyChooseSection: React.FC = () => {
 
             <div className="flex flex-col space-y-6">
               <div className="bg-white dark:bg-gray-800 p-4 md:p-6 rounded-lg shadow-md border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-750 transition duration-200 flex-1 lg:h-[200px]">
-                <div className="flex flex-col md:flex-row md:items-start space-y-4 md:space-y-0 md:space-x-4 lg:space-x-6">
+                <div className="flex flex-col md:flex-row md:items-start space-y-4 md:space-y-0 md:space-x-4 lg:space-x-6 lg:gap-6">
                   <div className="flex-shrink-0 w-12 h-12 bg-gradient-to-r from-yellow-400 to-yellow-600 rounded-lg flex items-center justify-center mx-auto md:mx-0">
                     <Shield className="w-6 h-6 text-white" />
                   </div>
@@ -85,7 +86,7 @@ const WhyChooseSection: React.FC = () => {
               </div>
 
               <div className="bg-white dark:bg-gray-800 p-4 md:p-6 rounded-lg shadow-md border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-750 transition duration-200 flex-1 lg:h-[200px]">
-                <div className="flex flex-col md:flex-row md:items-start space-y-4 md:space-y-0 md:space-x-4 lg:space-x-6">
+                <div className="flex flex-col md:flex-row md:items-start space-y-4 md:space-y-0 md:space-x-4 lg:space-x-6 lg:gap-6">
                   <div className="flex-shrink-0 w-12 h-12 bg-gradient-to-r from-yellow-400 to-yellow-600 rounded-lg flex items-center justify-center mx-auto md:mx-0">
                     <Star className="w-6 h-6 text-white" />
                   </div>
