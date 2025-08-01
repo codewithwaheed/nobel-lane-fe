@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,20 +15,27 @@ import { CalendarIcon, ClockIcon, MapPinIcon, UserIcon } from "lucide-react";
 import { format } from "date-fns";
 import { getBookingData, type BookingFormData } from "@/lib/booking-storage";
 
-export default function BookNowPage() {
+function BookNowContent() {
   const searchParams = useSearchParams();
   const type = searchParams.get("type"); // "quote" or "book-now"
   const [formData, setFormData] = useState<BookingFormData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    // Retrieve form data using utility function
-    const data = getBookingData();
-    setFormData(data);
-    setLoading(false);
+    setMounted(true);
   }, []);
 
-  if (loading) {
+  useEffect(() => {
+    if (mounted) {
+      // Only access localStorage after component is mounted on client
+      const data = getBookingData();
+      setFormData(data);
+      setLoading(false);
+    }
+  }, [mounted]);
+
+  if (!mounted || loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -234,5 +241,24 @@ export default function BookNowPage() {
         </Card>
       </div>
     </div>
+  );
+}
+
+function LoadingFallback() {
+  return (
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+        <p className="text-gray-600">Loading your booking details...</p>
+      </div>
+    </div>
+  );
+}
+
+export default function BookNowPage() {
+  return (
+    <Suspense fallback={<LoadingFallback />}>
+      <BookNowContent />
+    </Suspense>
   );
 }

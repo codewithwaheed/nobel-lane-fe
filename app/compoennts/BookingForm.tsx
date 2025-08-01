@@ -4,8 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { Calendar } from "@/components/ui/calendar";
-import { Label } from "@/components/ui/label";
-import { CalendarIcon, ChevronDownIcon, TimerIcon } from "lucide-react";
+import { CalendarIcon, TimerIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import {
