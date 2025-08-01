@@ -1,26 +1,8 @@
 import React from "react";
-import {
-  Calendar,
-  Users,
-  Briefcase,
-  Sparkles,
-  MapPin,
-  Clock,
-} from "lucide-react";
+import { Calendar, Trophy, Plane, Sparkles, MapPin, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const specialEventsData = [
-  {
-    icon: Briefcase,
-    title: "Corporate Events",
-    description:
-      "Executive meetings, board retreats, and business conferences with professional transportation coordination.",
-    features: [
-      "Multi-stop coordination",
-      "Executive greeting service",
-      "Real-time updates",
-    ],
-  },
   {
     icon: Sparkles,
     title: "Galas & Award Ceremonies",
@@ -29,11 +11,26 @@ const specialEventsData = [
     features: ["Red carpet service", "Photo coordination", "VIP treatment"],
   },
   {
-    icon: Users,
-    title: "Group Transportation",
+    icon: Plane,
+    title: "Private FBO",
     description:
-      "Luxury group transport for corporate outings, team building events, and executive retreats.",
-    features: ["Multiple vehicles", "Group coordination", "Custom itineraries"],
+      "Seamless transportation to and from Fixed Base Operators (FBOs) for private jet travel with VIP service.",
+    features: [
+      "Private jet terminals",
+      "Airside coordination",
+      "Executive concierge",
+    ],
+  },
+  {
+    icon: Trophy,
+    title: "Sporting Events",
+    description:
+      "Premium transportation for sports games, tournaments, and athletic events with tailored service packages.",
+    features: [
+      "Event parking coordination",
+      "Pre-game arrivals",
+      "Group packages",
+    ],
   },
   {
     icon: Calendar,
@@ -46,6 +43,7 @@ const specialEventsData = [
       "Flexible scheduling",
     ],
   },
+
   {
     icon: MapPin,
     title: "City Tours & Entertainment",
@@ -57,6 +55,7 @@ const specialEventsData = [
       "Entertainment coordination",
     ],
   },
+
   {
     icon: Clock,
     title: "Multi-Day Events",
@@ -78,12 +77,13 @@ const SpecialEventsSection: React.FC = () => {
           {/* Header */}
           <div className="text-center mb-16">
             <h2 className="text-2xl md:text-4xl font-bold text-gray-900 dark:text-white mb-6">
-              Special Events & Corporate Transportation
+              Premium Events & Executive Aviation Transportation
             </h2>
             <p className="text-gray-600 dark:text-gray-400 md:text-xl max-w-3xl mx-auto leading-relaxed">
-              Elevate your special occasions with our premium transportation
-              services. From corporate events to luxury galas, we ensure every
-              detail is perfectly executed.
+              Elevate your most important occasions with our exclusive
+              transportation services. From private aviation and sporting events
+              to luxury galas, we deliver unparalleled service for every
+              distinguished event.
             </p>
           </div>
 

@@ -6,6 +6,7 @@ import { z } from "zod";
 import { Calendar } from "@/components/ui/calendar";
 import { Label } from "@/components/ui/label";
 import { CalendarIcon, ChevronDownIcon, TimerIcon } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 import {
   Popover,
@@ -25,6 +26,7 @@ import { Input } from "@/components/ui/input";
 import React from "react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns/format";
+import { saveBookingData } from "@/lib/booking-storage";
 
 const FormSchema = z
   .object({
@@ -64,6 +66,7 @@ const FormSchema = z
   });
 
 export function BookingForm({ isModal = false }: { isModal?: boolean }) {
+  const router = useRouter();
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
@@ -79,15 +82,29 @@ export function BookingForm({ isModal = false }: { isModal?: boolean }) {
   // Watch the form's type field for reactive updates
   const tripType = form.watch("type");
 
-  function onSubmit(data: z.infer<typeof FormSchema>) {
-    console.log("Form submitted:", data);
-    // toast("You submitted the following values", {
-    //   description: (
-    //     <pre className="mt-2 w-[320px] rounded-md bg-neutral-950 p-4">
-    //       <code className="text-white">{JSON.stringify(data, null, 2)}</code>
-    //     </pre>
-    //   ),
-    // });
+  // Handle form submission for both Get Quote and Book Now
+  function handleFormSubmission(actionType: "quote" | "book-now") {
+    return (data: z.infer<typeof FormSchema>) => {
+      console.log(`${actionType} submitted:`, data);
+
+      // Save form data to localStorage using utility function
+      const saved = saveBookingData(data);
+
+      if (saved) {
+        // Redirect based on action type
+        if (actionType === "quote") {
+          router.push("/book-now?type=quote");
+        } else {
+          router.push("/book-now?type=book-now");
+        }
+      } else {
+        // Handle error case - could show a toast notification
+        console.error("Failed to save booking data");
+        alert(
+          "Sorry, there was an error saving your booking data. Please try again."
+        );
+      }
+    };
   }
 
   return (
@@ -99,7 +116,6 @@ export function BookingForm({ isModal = false }: { isModal?: boolean }) {
             ? "min-h-full rounded-none shadow-none p-2 backdrop-blur-none bg-transparent pt-10"
             : ""
         )}
-        onSubmit={form.handleSubmit(onSubmit)}
       >
         <h3 className="text-xl font-semibold mb-6 text-gray-900">
           Book Your Ride
@@ -268,14 +284,26 @@ export function BookingForm({ isModal = false }: { isModal?: boolean }) {
             />
           </div>
         </div>
-        <Button
-          type="submit"
-          variant="primary-linear"
-          size="lg"
-          className="w-full"
-        >
-          Book Now <span aria-hidden="true">&rarr;</span>
-        </Button>
+        <div className="flex flex-col gap-3">
+          <Button
+            type="button"
+            size="lg"
+            className="w-full font-semibold"
+            variant="outline"
+            onClick={form.handleSubmit(handleFormSubmission("quote"))}
+          >
+            Get Quote
+          </Button>
+          <Button
+            type="button"
+            variant="primary-linear"
+            size="lg"
+            className="w-full"
+            onClick={form.handleSubmit(handleFormSubmission("book-now"))}
+          >
+            Book Now <span aria-hidden="true">&rarr;</span>
+          </Button>
+        </div>
       </form>
     </Form>
   );

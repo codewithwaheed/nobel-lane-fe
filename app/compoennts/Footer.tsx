@@ -40,6 +40,11 @@ export default function Footer() {
                 Contact
               </a>
             </li>
+            <li>
+              <a href="#" className="hover:text-yellow-400">
+                Get Quote
+              </a>
+            </li>
           </ul>
         </div>
         <hr className="my-6 border-gray-600 sm:mx-auto lg:my-8" />

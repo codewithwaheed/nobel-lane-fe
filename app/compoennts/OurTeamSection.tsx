@@ -9,13 +9,13 @@ const teamMembers = [
     bio: "Subscribe Easy Tutorials Youtube Channel watch more videos",
   },
   {
-    picture: "/team2.jpg",
+    picture: "/team1.jpg",
     fullName: 'Mekonnen "Mike" Habte',
     designation: "Lead Chauffeur",
     bio: "Subscribe Easy Tutorials Youtube Channel watch more videos",
   },
   {
-    picture: "/team1.jpg",
+    picture: "/team2.jpg",
     fullName: "Robert Seltzer",
     designation: "Senior VIP Chauffeur",
     bio: "Subscribe Easy Tutorials Youtube Channel watch more videos",
