@@ -4,7 +4,7 @@ import React from "react";
 const skillsData = [
   {
     name: "Professional Drivers",
-    description: `Experienced, vetted chauffeurs who
+    description: `Experienced, vetted chauffeurs at the wheel who
 understand the importance of discretion
 and punctuality.`,
     icon: "/skills5.svg",
