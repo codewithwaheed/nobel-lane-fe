@@ -84,7 +84,7 @@ export function FleetSection() {
         </p>
         <Carousel
           setApi={setApi}
-          className="w-full max-w-7xl mx-auto"
+          className="w-full max-w-7xl mx-auto relative"
           opts={{
             align: "center",
             loop: true,
@@ -191,8 +191,8 @@ export function FleetSection() {
               );
             })}
           </CarouselContent>
-          <CarouselPrevious />
-          <CarouselNext />
+          <CarouselPrevious className="hidden md:flex" />
+          <CarouselNext className="hidden md:flex" />
         </Carousel>
 
         {/* Carousel Indicators */}

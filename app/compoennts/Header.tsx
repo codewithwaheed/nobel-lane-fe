@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { Dialog, DialogPanel, PopoverGroup } from "@headlessui/react";
 import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
 import { Button } from "@/components/ui/button";
@@ -15,22 +16,22 @@ export default function Header({
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
-    <header className="bg-white">
+    <header className="bg-white border-b border-gray-200 dark:border-gray-700">
       <nav
         aria-label="Global"
         className="mx-auto flex max-w-7xl items-center justify-between p-6 pb-0 md:pb-6 lg:px-8"
       >
         <div className="flex lg:flex-1">
-          <a href="#" className="-m-1.5 p-1.5">
+          <Link href="/" className="-m-1.5 p-1.5">
             <span className="sr-only"> Nobel Lane</span>
             <Image
               alt=""
               src="/logo.png"
               width={220}
               height={90}
-              className="h-12 w-auto"
+              className="h-10 mb-2 md:mb-0 md:h-12 w-auto"
             />
-          </a>
+          </Link>
         </div>
         <div className="flex lg:hidden">
           <button
@@ -43,27 +44,40 @@ export default function Header({
           </button>
         </div>
         <PopoverGroup className="hidden lg:flex lg:gap-x-8">
-          <a href="#" className="text-sm/6 font-semibold text-gray-900">
+          <Link
+            href="/#services"
+            className="text-sm/6 font-semibold text-gray-900"
+          >
             Services
-          </a>
-          <a href="#" className="text-sm/6 font-semibold text-gray-900">
+          </Link>
+          <Link
+            href="/book-now"
+            className="text-sm/6 font-semibold text-gray-900"
+          >
             Book Now
-          </a>
-          <a href="#" className="text-sm/6 font-semibold text-gray-900">
+          </Link>
+          <Link href="/about" className="text-sm/6 font-semibold text-gray-900">
             About
-          </a>
-          <a href="#" className="text-sm/6 font-semibold text-gray-900">
+          </Link>
+          <Link
+            href="/contact-us"
+            className="text-sm/6 font-semibold text-gray-900"
+          >
             Contact
-          </a>
+          </Link>
         </PopoverGroup>
         <div className="hidden lg:flex lg:flex-1 lg:justify-end">
           <PhoneCall />
-          <Button variant="outline" className="font-semibold">
-            Get Quote
-          </Button>
-          <Button variant="primary-linear" className="font-semibold ml-3">
-            Book Now <span aria-hidden="true">&rarr;</span>
-          </Button>
+          <Link href="/book-now?type=quote">
+            <Button variant="outline" className="font-semibold">
+              Get Quote
+            </Button>
+          </Link>
+          <Link href="/book-now" className="ml-3">
+            <Button variant="primary-linear" className="font-semibold">
+              Book Now <span aria-hidden="true">&rarr;</span>
+            </Button>
+          </Link>
         </div>
       </nav>
       <div className="lg:hidden">
@@ -89,16 +103,16 @@ export default function Header({
         <div className="fixed inset-0 z-50" />
         <DialogPanel className="fixed inset-y-0 right-0 z-50 w-full overflow-y-auto bg-white p-6 sm:max-w-sm sm:ring-1 sm:ring-gray-900/10">
           <div className="flex items-center justify-between">
-            <a href="#" className="-m-1.5 p-1.5">
+            <Link href="/" className="-m-1.5 p-1.5">
               <span className="sr-only">Noble Lane</span>
               <Image
                 alt=""
                 src="/logo.png"
                 width={32}
                 height={32}
-                className="h-8 w-auto"
+                className="h-10 w-auto"
               />
-            </a>
+            </Link>
             <button
               type="button"
               onClick={() => setMobileMenuOpen(false)}
@@ -111,46 +125,56 @@ export default function Header({
           <div className="mt-6 flow-root">
             <div className="-my-6 divide-y divide-gray-500/10">
               <div className="space-y-2 py-6">
-                <a
-                  href="#"
+                <Link
+                  href="/#services"
                   className="-mx-3 block rounded-lg px-3 py-2 text-base/7 font-semibold text-gray-900 hover:bg-gray-50"
+                  onClick={() => setMobileMenuOpen(false)}
                 >
                   Services
-                </a>
-                <a
-                  href="#"
+                </Link>
+                <Link
+                  href="/book-now"
                   className="-mx-3 block rounded-lg px-3 py-2 text-base/7 font-semibold text-gray-900 hover:bg-gray-50"
+                  onClick={() => setMobileMenuOpen(false)}
                 >
                   Book Now
-                </a>
-                <a
-                  href="#"
+                </Link>
+                <Link
+                  href="/about"
                   className="-mx-3 block rounded-lg px-3 py-2 text-base/7 font-semibold text-gray-900 hover:bg-gray-50"
+                  onClick={() => setMobileMenuOpen(false)}
                 >
                   About
-                </a>
-                <a
-                  href="#"
+                </Link>
+                <Link
+                  href="/contact-us"
                   className="-mx-3 block rounded-lg px-3 py-2 text-base/7 font-semibold text-gray-900 hover:bg-gray-50"
+                  onClick={() => setMobileMenuOpen(false)}
                 >
                   Contact
-                </a>
+                </Link>
               </div>
               <div className="py-6">
-                <Button
-                  variant="outline"
-                  size="lg"
-                  className="font-semibold w-full"
-                >
-                  Get Quote
-                </Button>
-                <Button
-                  variant="primary-linear"
-                  size="lg"
-                  className="font-semibold w-full mt-4"
-                >
-                  Book Now <span aria-hidden="true">&rarr;</span>
-                </Button>
+                <Link href="/book-now?type=quote" className="block">
+                  <Button
+                    variant="outline"
+                    size="lg"
+                    className="font-semibold w-full"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Get Quote
+                  </Button>
+                </Link>
+                <Link href="/book-now" className="block mt-4">
+                  <Button
+                    variant="primary-linear"
+                    size="lg"
+                    className="font-semibold w-full"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Book Now <span aria-hidden="true">&rarr;</span>
+                  </Button>
+                </Link>
               </div>
             </div>
           </div>

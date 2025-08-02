@@ -1,8 +1,12 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
 import React from "react";
+import { useBooking } from "../contexts/BookingContext";
 
 export default function Footer() {
+  const { setIsBookingModalOpen } = useBooking();
   return (
     <footer className="bg-gray-800 dark:bg-gray-900">
       <div className="w-full max-w-screen-xl mx-auto p-4 md:py-8">
@@ -26,24 +30,36 @@ export default function Footer() {
               </a>
             </li>
             <li>
-              <a href="#" className="hover:text-yellow-400 me-4 md:me-6">
+              <button
+                onClick={() => setIsBookingModalOpen(true)}
+                className="hover:text-yellow-400 me-4 md:me-6 bg-transparent border-none text-sm font-medium text-gray-300 cursor-pointer"
+              >
                 Book Now
-              </a>
+              </button>
             </li>
             <li>
-              <a href="#" className="hover:text-yellow-400 me-4 md:me-6">
+              <Link
+                href="/about"
+                className="hover:text-yellow-400 me-4 md:me-6"
+              >
                 About
-              </a>
+              </Link>
             </li>
             <li>
-              <a href="#" className="hover:text-yellow-400">
+              <Link
+                href="/contact-us"
+                className="hover:text-yellow-400 me-4 md:me-6"
+              >
                 Contact
-              </a>
+              </Link>
             </li>
             <li>
-              <a href="#" className="hover:text-yellow-400">
+              <button
+                onClick={() => setIsBookingModalOpen(true)}
+                className="hover:text-yellow-400 bg-transparent border-none text-sm font-medium text-gray-300 cursor-pointer"
+              >
                 Get Quote
-              </a>
+              </button>
             </li>
           </ul>
         </div>

@@ -21,7 +21,7 @@ export function saveBookingData(
   try {
     // Check if we're in a browser environment
     if (typeof window === "undefined") return false;
-    
+
     const storageData: BookingFormData = {
       ...data,
       date: data.date.toISOString(),
@@ -43,7 +43,7 @@ export function getBookingData(): BookingFormData | null {
   try {
     // Check if we're in a browser environment
     if (typeof window === "undefined") return null;
-    
+
     const savedData = localStorage.getItem(BOOKING_STORAGE_KEY);
     if (!savedData) return null;
 
@@ -61,7 +61,7 @@ export function clearBookingData(): boolean {
   try {
     // Check if we're in a browser environment
     if (typeof window === "undefined") return false;
-    
+
     localStorage.removeItem(BOOKING_STORAGE_KEY);
     return true;
   } catch (error) {

@@ -1,19 +1,4 @@
 import type { Metadata } from "next";
-import { Poppins, Crimson_Text } from "next/font/google";
-import "./globals.css";
-import ClientLayout from "./ClientLayout";
-
-const poppins = Poppins({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-  weight: ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
-});
-
-const crimsonText = Crimson_Text({
-  variable: "--font-crimson",
-  subsets: ["latin"],
-  weight: ["400", "600", "700"],
-});
 
 export const metadata: Metadata = {
   title: "Executive Car Service Dallas | Luxury Chauffeur DFW | Noble Lane",
@@ -74,19 +59,3 @@ export const metadata: Metadata = {
     },
   },
 };
-
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
-  return (
-    <html lang="en">
-      <body
-        className={`${poppins.variable} ${crimsonText.variable} antialiased font-sans overflow-x-hidden`}
-      >
-        <ClientLayout>{children}</ClientLayout>
-      </body>
-    </html>
-  );
-}

@@ -2,13 +2,11 @@
 import * as React from "react";
 
 import { Button } from "@/components/ui/button";
+import { useBooking } from "../contexts/BookingContext";
 
 import { BookingForm } from "./BookingForm";
-export default function HeroSection({
-  setIsBookingModalOpen,
-}: {
-  setIsBookingModalOpen: (open: boolean) => void;
-}) {
+export default function HeroSection() {
+  const { setIsBookingModalOpen } = useBooking();
   return (
     <div
       className="min-h-[550px] md:min-h-[650px] bg-cover bg-center bg-no-repeat relative"
