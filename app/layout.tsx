@@ -53,7 +53,7 @@ export const metadata: Metadata = {
     siteName: "Noble Lane Executive Transportation",
     images: [
       {
-        url: "/noble-lane-og-image.jpg",
+        url: "/logo.png",
         width: 1200,
         height: 630,
         alt: "Noble Lane Executive Car Service Dallas",

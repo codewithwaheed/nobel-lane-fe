@@ -128,6 +128,50 @@ export default function AboutPage() {
           </motion.div>
         ))}
 
+        {/* Enhanced Quote Section */}
+        <motion.div
+          initial={{ opacity: 0, y: 50 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          viewport={{ once: true }}
+          className="mt-20 text-center max-w-4xl mx-auto"
+        >
+          {/* Quote Section with Enhanced Design */}
+          <div className="relative bg-gradient-to-br from-amber-50 to-orange-50 dark:from-gray-800 dark:to-gray-900 rounded-3xl p-8 md:p-12 lg:p-16 border border-amber-200 dark:border-gray-700 shadow-xl">
+            {/* Decorative Quote Marks */}
+            <div className="absolute top-4 left-4 md:top-6 md:left-6 text-6xl md:text-8xl text-amber-300 dark:text-amber-600 opacity-30 font-serif leading-none">
+              &ldquo;
+            </div>
+            <div className="absolute bottom-4 right-4 md:bottom-6 md:right-6 text-6xl md:text-8xl text-amber-300 dark:text-amber-600 opacity-30 font-serif leading-none transform rotate-180">
+              &rdquo;
+            </div>
+
+            {/* Main Quote */}
+            <div className="relative z-10 space-y-6">
+              <p className="italic text-2xl md:text-3xl lg:text-4xl font-serif text-amber-600 dark:text-amber-400 font-bold leading-tight">
+                Excellence is not an act, but a habit
+              </p>
+              <p className="text-lg md:text-xl text-amber-700 dark:text-amber-300 font-medium tracking-wide">
+                — Arete
+              </p>
+
+              {/* Decorative Divider */}
+              <div className="flex items-center justify-center py-4">
+                <div className="h-px bg-gradient-to-r from-transparent via-amber-400 to-transparent w-32 md:w-48"></div>
+                <div className="mx-4 w-2 h-2 bg-amber-400 rounded-full"></div>
+                <div className="h-px bg-gradient-to-r from-transparent via-amber-400 to-transparent w-32 md:w-48"></div>
+              </div>
+
+              {/* Description */}
+              <p className="text-base md:text-lg lg:text-xl leading-relaxed text-gray-700 dark:text-gray-300 max-w-3xl mx-auto font-medium">
+                We attract chauffeurs who live the philosophy of Arete —
+                mastering their craft with professionalism and heart. They walk
+                this noble lane every day.
+              </p>
+            </div>
+          </div>
+        </motion.div>
+
         {/* CTA */}
         <div className="bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 rounded-2xl p-8 md:p-12 lg:p-16 text-center mt-16 md:mt-20 lg:mt-24 border border-gray-200 dark:border-gray-700 shadow-lg">
           <h2 className="text-xl md:text-3xl lg:text-4xl font-bold mb-4 md:mb-6 leading-relaxed md:leading-normal">

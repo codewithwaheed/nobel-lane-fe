@@ -6,6 +6,8 @@ import { z } from "zod";
 import { Calendar } from "@/components/ui/calendar";
 import { CalendarIcon, TimerIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
+import type { BookingFormData } from "@/lib/booking-storage";
+import { saveBookingData } from "@/lib/booking-storage";
 
 import {
   Popover,
@@ -25,7 +27,6 @@ import { Input } from "@/components/ui/input";
 import React from "react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns/format";
-import { saveBookingData } from "@/lib/booking-storage";
 
 const FormSchema = z
   .object({
@@ -86,8 +87,19 @@ export function BookingForm({ isModal = false }: { isModal?: boolean }) {
     return (data: z.infer<typeof FormSchema>) => {
       console.log(`${actionType} submitted:`, data);
 
+      // Transform data to match BookingFormData interface
+      const bookingData: Omit<BookingFormData, "submittedAt" | "date"> & {
+        date: Date;
+      } = {
+        ...data,
+        isQuote: actionType === "quote",
+        passengers: 1, // Default value
+        currentStep: 1, // Starting step
+        completedSteps: [], // No steps completed yet
+      };
+
       // Save form data to localStorage using utility function
-      const saved = saveBookingData(data);
+      const saved = saveBookingData(bookingData);
 
       if (saved) {
         // Redirect based on action type
