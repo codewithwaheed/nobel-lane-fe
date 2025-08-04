@@ -71,69 +71,67 @@ export default function ExecutiveTransportationPage() {
           </div>
         </div>
       </section>
-{[
-  {
-    title: "Private Jet & FBO Transportation",
-    desc: `Experience seamless, white-glove VIP service from the moment your plane touches down. 
+      {[
+        {
+          title: "Private Jet & FBO Transportation",
+          desc: `Experience seamless, white-glove VIP service from the moment your plane touches down. 
 Our professional chauffeurs coordinate directly with all DFW-area FBOs to provide a smooth transition from aircraft to luxury vehicle. 
 Enjoy complimentary flight tracking, flexible pickup adjustments, and meet-and-greet service right at the aircraft steps. 
 Travel in ultimate comfort with our fleet of executive sedans and SUVs, fully equipped with Wi-Fi, leather seating, and refreshments for a first-class ground experience.`,
-    img: "/luxury-suv.png",
-  },
-  {
-    title: "Corporate Car Service",
-    desc: `Designed for high-level business travel, our corporate car service ensures punctuality, discretion, and comfort. 
+          img: "/luxury-suv.png",
+        },
+        {
+          title: "Corporate Car Service",
+          desc: `Designed for high-level business travel, our corporate car service ensures punctuality, discretion, and comfort. 
 Whether attending multi-city meetings, executive roadshows, or corporate events, our chauffeurs provide a seamless mobile office experience. 
 We offer discreet pickup options at baggage claim or curbside, while our luxury vehicles come equipped with Wi-Fi, charging ports, climate control, and privacy-tinted windows. 
 Stay productive on the road and arrive at your destination prepared and refreshed.`,
-    img: "/luxury-sedan.png",
-  },
-].map((item, index) => (
-  <motion.section
-    key={index}
-    initial={{ opacity: 0, y: 20 }}
-    whileInView={{ opacity: 1, y: 0 }}
-    transition={{ duration: 0.6, delay: index * 0.1 }}
-    viewport={{ once: true }}
-    className="grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-10 items-center mb-12 md:mb-16 lg:mb-24 container mx-auto px-4"
-  >
-    {/* Image Column */}
-    <div
-      className={`col-span-1 md:col-span-7 lg:col-span-6 ${
-        index % 2 === 0 ? "md:order-1" : "md:order-2"
-      } flex justify-center`}
-    >
-      <div className="relative overflow-hidden rounded-2xl group cursor-pointer w-full max-w-[650px]">
-        <Image
-          src={item.img}
-          alt={item.title}
-          width={700}
-          height={500}
-          className="w-full h-64 md:h-80 lg:h-[500px] object-cover object-center transition-all duration-500 ease-in-out group-hover:scale-110 group-hover:brightness-110"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-      </div>
-    </div>
+          img: "/luxury-sedan.png",
+        },
+      ].map((item, index) => (
+        <motion.section
+          key={index}
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: index * 0.1 }}
+          viewport={{ once: true }}
+          className="grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-10 items-center mb-12 md:mb-16 lg:mb-24 container mx-auto px-4"
+        >
+          {/* Image Column */}
+          <div
+            className={`col-span-1 md:col-span-7 lg:col-span-6 ${
+              index % 2 === 0 ? "md:order-1" : "md:order-2"
+            } flex justify-center`}
+          >
+            <div className="relative overflow-hidden rounded-2xl group cursor-pointer w-full max-w-[650px]">
+              <Image
+                src={item.img}
+                alt={item.title}
+                width={700}
+                height={500}
+                className="w-full h-64 md:h-80 lg:h-[500px] object-cover object-center transition-all duration-500 ease-in-out group-hover:scale-110 group-hover:brightness-110"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            </div>
+          </div>
 
-    {/* Content Column */}
-    <div
-      className={`col-span-1 md:col-span-5 lg:col-span-6 ${
-        index % 2 === 0 ? "md:order-2" : "md:order-1"
-      }`}
-    >
-      <div className="text-center md:text-left max-w-xl mx-auto md:mx-0">
-        <h2 className="text-2xl md:text-3xl font-bold mb-4">
-          {item.title}
-        </h2>
-        <p className="text-base md:text-lg opacity-80 leading-relaxed whitespace-pre-line">
-          {item.desc}
-        </p>
-      </div>
-    </div>
-  </motion.section>
-))}
-
-
+          {/* Content Column */}
+          <div
+            className={`col-span-1 md:col-span-5 lg:col-span-6 ${
+              index % 2 === 0 ? "md:order-2" : "md:order-1"
+            }`}
+          >
+            <div className="text-center md:text-left max-w-xl mx-auto md:mx-0">
+              <h2 className="text-2xl md:text-3xl font-bold mb-4">
+                {item.title}
+              </h2>
+              <p className="text-base md:text-lg opacity-80 leading-relaxed whitespace-pre-line">
+                {item.desc}
+              </p>
+            </div>
+          </div>
+        </motion.section>
+      ))}
 
       {/* Core Services Section */}
       <section className="py-16 md:py-24 bg-gray-50 dark:bg-gray-900">
@@ -215,8 +213,6 @@ Stay productive on the road and arrive at your destination prepared and refreshe
           </div>
         </div>
       </section>
-          </main>
+    </main>
   );
 }
-
-

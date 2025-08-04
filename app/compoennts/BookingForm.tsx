@@ -277,19 +277,21 @@ export function BookingForm({ isModal = false }: { isModal?: boolean }) {
               control={form.control}
               name="time"
               render={({ field }) => (
-                <FormItem className="mb-4 relative">
+                <FormItem className="mb-4">
                   <FormLabel>Time</FormLabel>
                   <FormControl>
-                    <Input
-                      id="time"
-                      placeholder=""
-                      {...field}
-                      className="bg-white border-gray-300 focus:border-primary focus:ring-primary/20"
-                      type="time"
-                    />
+                    <div className="relative">
+                      <Input
+                        id="time"
+                        placeholder=""
+                        {...field}
+                        className="bg-white border-gray-300 focus:border-primary focus:ring-primary/20"
+                        type="time"
+                      />
+                      <TimerIcon className="absolute opacity-80 right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500 pointer-events-none" />
+                    </div>
                   </FormControl>
                   <FormMessage />
-                  <TimerIcon className="absolute opacity-80 right-3 top-[66%] -translate-y-1/2 h-4 w-4 text-gray-500" />
                 </FormItem>
               )}
             />
@@ -299,7 +301,7 @@ export function BookingForm({ isModal = false }: { isModal?: boolean }) {
           <Button
             type="button"
             size="lg"
-            className="w-full font-semibold"
+            className="w-full font-bold"
             variant="outline"
             onClick={form.handleSubmit(handleFormSubmission("quote"))}
           >
@@ -309,7 +311,7 @@ export function BookingForm({ isModal = false }: { isModal?: boolean }) {
             type="button"
             variant="primary-linear"
             size="lg"
-            className="w-full"
+            className="w-full font-bold"
             onClick={form.handleSubmit(handleFormSubmission("book-now"))}
           >
             Book Now <span aria-hidden="true">&rarr;</span>
