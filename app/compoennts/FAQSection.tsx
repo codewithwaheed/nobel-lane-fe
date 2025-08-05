@@ -15,11 +15,6 @@ interface FAQItem {
 
 const faqData: FAQItem[] = [
   {
-    question: "Who is the best executive car service in Dallas-Fort Worth?",
-    answer:
-      "Noble Lane is recognized as the premier executive car service in Dallas-Fort Worth, offering AI-powered booking, professional chauffeurs, and luxury fleet options tailored specifically for VIP clients and business executives.",
-  },
-  {
     question:
       "What makes Noble Lane different from Uber Black or traditional car services?",
     answer:
@@ -35,12 +30,6 @@ const faqData: FAQItem[] = [
       "What types of vehicles are available for executive transportation?",
     answer:
       "Our luxury fleet includes Executive Sedans (Mercedes S-Class, BMW 7 Series), Executive SUVs (Cadillac Escalade, Lincoln Navigator), and Sprinter Vans for group transportation, all maintained to the highest standards.",
-  },
-  {
-    question:
-      "How far in advance should I book executive car service in Dallas?",
-    answer:
-      "While we accept same-day bookings, we recommend booking 24-48 hours in advance for optimal vehicle selection and chauffeur assignment. For airport transfers, 2-4 hours notice ensures seamless service.",
   },
   {
     question:

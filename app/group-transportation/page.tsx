@@ -56,10 +56,10 @@ Our experienced logistics team coordinates multiple vehicles, manages complex it
     img: "/business-car.jpeg",
   },
   {
-    title: "Corporate Events & Medical Transportation",
-    desc: `Specialized group transportation services for corporate events, conferences, and medical speaker transportation with professional coordination.
+    title: "Corporate Events & Speaker Transportation",
+    desc: `Specialized group transportation services for corporate events, conferences, and speaker transportation with professional coordination.
 
-We understand the unique requirements of corporate gatherings and medical events, providing reliable transportation that reflects your organization's professionalism.
+We understand the unique requirements of corporate gatherings and professional events, providing reliable transportation that reflects your organization's professionalism.
 
 Our services include speaker transportation, attendee shuttles, multi-venue coordination, and flexible scheduling to accommodate last-minute changes or extended event schedules.`,
     img: "/contact-us.jpeg",
@@ -102,13 +102,13 @@ const coreServices = [
     cta: "Get Group Quote",
   },
   {
-    title: "Medical Speaker Transport",
+    title: "Speaker Transportation",
     icon: <Stethoscope className="w-6 h-6 text-white" />,
     desc: [
-      "Medical conference speaker transportation",
-      "Healthcare professional group transport",
-      "Hospital and medical facility transfers",
-      "Pharmaceutical event coordination",
+      "Conference speaker transportation",
+      "Professional speaker group transport",
+      "Event venue and hotel transfers",
+      "Corporate event coordination",
     ],
     cta: "Get Group Quote",
   },
@@ -210,7 +210,7 @@ export default function GroupTransportationPage() {
           </h2>
           <p className="text-center max-w-3xl mx-auto text-gray-600 dark:text-gray-400 mb-16 text-base md:text-lg">
             Comprehensive group transportation solutions for corporate events,
-            conferences, and medical transportation throughout the Dallas-Fort
+            conferences, and speaker transportation throughout the Dallas-Fort
             Worth area.
           </p>
 

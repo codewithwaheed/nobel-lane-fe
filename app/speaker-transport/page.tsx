@@ -53,7 +53,7 @@ const serviceSpotlight = [
 Our experienced chauffeurs are familiar with conference schedules, venue protocols, and the importance of punctuality for professional speakers. We ensure your speakers arrive refreshed and on time for their presentations.
 
 From corporate conferences to industry symposiums, we handle transportation logistics so your speakers can focus on delivering impactful presentations and sharing their expertise.`,
-    img: "/speaker-transport.jpeg",
+    img: "/speaker-transport.jpg",
   },
   {
     title: "Event & Venue Coordination",

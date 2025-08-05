@@ -8,7 +8,7 @@ export default function ContactPage() {
     <main className="bg-white dark:bg-[#0b1727] text-zinc-900 dark:text-white font-sans">
       <div className="w-full h-12 mt-1 bg-black flex items-center justify-center md:hidden">
         <h1 className="text-white text-sm font-semibold tracking-widest uppercase">
-          Contact Us
+          Contact Noble Lane
         </h1>
       </div>
 
@@ -24,10 +24,15 @@ export default function ContactPage() {
         <div className="absolute inset-0 bg-black/40" />
 
         {/* Desktop-only title */}
-        <div className="hidden md:block relative z-10 px-6 md:px-16 max-w-2xl">
-          <h1 className="text-3xl md:text-5xl font-bold tracking-wide">
-            Contact Us
+        <div className="hidden md:block relative z-10 px-6 md:px-16 max-w-4xl">
+          <h1 className="text-3xl md:text-5xl font-bold tracking-wide mb-4">
+            Contact Noble Lane
           </h1>
+          <p className="text-lg md:text-xl opacity-90 leading-relaxed max-w-3xl">
+            Ready to experience premium executive transportation? Get in touch
+            with our team for immediate assistance or custom transportation
+            solutions.
+          </p>
         </div>
       </section>
 
@@ -35,6 +40,15 @@ export default function ContactPage() {
 
       {/* Contact Section */}
       <section className="py-16 px-6 md:px-16 lg:px-24 max-w-7xl mx-auto">
+        {/* Mobile subtitle */}
+        <div className="block md:hidden mb-8 text-center">
+          <p className="text-base opacity-80 leading-relaxed">
+            Ready to experience premium executive transportation? Get in touch
+            with our team for immediate assistance or custom transportation
+            solutions.
+          </p>
+        </div>
+
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
           <div className="space-y-6">
             <div className="bg-white dark:bg-slate-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
@@ -78,15 +92,15 @@ export default function ContactPage() {
                 <div>
                   <h3 className="text-lg font-semibold mb-1">Email</h3>
                   <a
-                    href="mailto:info@gonoblelane.com"
+                    href="mailto:office@gonoblelane.com"
                     className="block text-base opacity-80 hover:text-amber-600 transition"
                   >
-                    info@gonoblelane.com
+                    office@gonoblelane.com
                   </a>
                   <button
                     onClick={() =>
                       window.open(
-                        "mailto:info@gonoblelane.com?subject=Request%20Zoom%20Meeting"
+                        "mailto:office@gonoblelane.com?subject=Request%20Zoom%20Meeting"
                       )
                     }
                     className="mt-1 text-sm text-amber-600 dark:text-amber-400 hover:underline"
@@ -110,7 +124,8 @@ export default function ContactPage() {
                     <br /> Dallas, TX 75205
                   </p>
                   <p className="text-sm opacity-70 mt-1">
-                    Office Hours: 9 AM – 6 PM (Mon-Fri)
+                    Office hours vary, but we&apos;re open until the last
+                    passenger is onboard
                   </p>
                 </div>
               </div>

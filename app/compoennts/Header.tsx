@@ -22,7 +22,7 @@ import {
 import {
   BuildingOffice2Icon,
   UserGroupIcon,
-  HeartIcon,
+  PresentationChartBarIcon,
 } from "@heroicons/react/24/solid";
 import { Button } from "@/components/ui/button";
 import PhoneCall from "./PhoneCall";
@@ -73,10 +73,10 @@ const services = [
     description: "Large group and event transportation",
   },
   {
-    name: "Medical Speaker Transport",
-    href: "/medical-speaker-transport",
-    icon: HeartIcon,
-    description: "Specialized medical professional transport",
+    name: "Speaker Transportation",
+    href: "/speaker-transport",
+    icon: PresentationChartBarIcon,
+    description: "Professional speaker and conference transport",
   },
 ];
 

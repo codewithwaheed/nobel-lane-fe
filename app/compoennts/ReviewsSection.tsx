@@ -1,7 +1,7 @@
 "use client";
 
-import React, { Fragment, useState } from "react";
-import { ChevronLeft, ChevronRight, Star } from "lucide-react";
+import React, { Fragment } from "react";
+import { Star } from "lucide-react";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 
@@ -35,42 +35,6 @@ const testimonialList: TestimonialItem[][] = [
       rating: 5,
       content:
         '"Over the years, Mike has become more of a dear friend to me, someone who me and my family trust deeply. If you\'re looking for a top-tier executive car service that prioritizes quality, professionalism, and reliability, this team is the gold standard."',
-    },
-  ],
-  [
-    {
-      photo:
-        "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face",
-      name: "Sushil Ahuja, Advisory Partner, PwC",
-      rating: 5,
-      content:
-        '"I have had the privilege of working and knowing Mike and his team for over 16 years, and their commitment to excellence has never wavered. From day one, they have exemplified professionalism, reliability, and a true dedication to customer service that sets them apart in the industry."',
-    },
-    {
-      photo:
-        "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face",
-      name: "James R.",
-      rating: 5,
-      content:
-        '"Whether I \'m landing at midnight or dawn, Robert and Charles are already staged on the FBO ramp—doors open, dog bed waiting, and plenty of room for our luggage."',
-    },
-  ],
-  [
-    {
-      photo:
-        "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face",
-      name: "Sushil Ahuja, Advisory Partner, PwC",
-      rating: 5,
-      content:
-        '"If you want the gold standard in executive car service, look no further—this team is it."',
-    },
-    {
-      photo:
-        "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face",
-      name: "Sushil Ahuja, Advisory Partner, PwC",
-      rating: 5,
-      content:
-        '"Mike and Charles\' punctuality is impeccable—always on time, without exception."',
     },
   ],
 ];
@@ -145,15 +109,6 @@ const TestimonialItemComponent: React.FC<TestimonialItemProps> = ({ item }) => {
 };
 
 const ReviewsSection: React.FC = () => {
-  const [index, setIndex] = useState<number>(0);
-
-  const handleControl = (type: "prev" | "next") => {
-    if (type === "prev") {
-      setIndex(index <= 0 ? testimonialList.length - 1 : index - 1);
-    } else if (type === "next") {
-      setIndex(index >= testimonialList.length - 1 ? 0 : index + 1);
-    }
-  };
   return (
     <section className="py-14 md:py-24 bg-white dark:bg-[#0b1727] text-zinc-900 dark:text-white">
       <div className="container px-4 mx-auto relative">
@@ -170,26 +125,11 @@ const ReviewsSection: React.FC = () => {
         </div>
 
         <div className="grid grid-cols-2 gap-6 mt-12">
-          {testimonialList[index].map((item, i) => (
+          {testimonialList[0].map((item, i) => (
             <div className="col-span-2 md:col-span-1" key={i}>
               <TestimonialItemComponent item={item} />
             </div>
           ))}
-        </div>
-
-        <div className="relative flex justify-center items-center my-12">
-          <button
-            className="cursor-pointer text-lg bg-primary-linear shadow-2xl dark:bg-slate-800 opacity-75 hover:opacity-100 w-12 h-12 flex justify-center items-center rounded-full mr-4"
-            onClick={() => handleControl("prev")}
-          >
-            <ChevronLeft color="white" className="w-5 h-5" />
-          </button>
-          <button
-            className="cursor-pointer text-lg bg-primary-linear shadow-2xl dark:bg-slate-800 opacity-75 hover:opacity-100 w-12 h-12 flex justify-center items-center rounded-full"
-            onClick={() => handleControl("next")}
-          >
-            <ChevronRight color="white" className="w-5 h-5" />
-          </button>
         </div>
       </div>
     </section>

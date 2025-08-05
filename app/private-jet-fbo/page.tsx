@@ -30,7 +30,7 @@ const fboFeatures = [
   {
     icon: <Clock className="w-6 h-6 text-white" />,
     title: "Real-Time Flight Tracking",
-    desc: "Advanced flight monitoring system automatically adjusts pickup times based on real-time flight data and delay notifications.",
+    desc: "Advanced flight monitoring system automatically adjusts pickup times based on real-time flight data and delay notifications. When owner allows tracking.",
   },
   {
     icon: <UserCheck className="w-6 h-6 text-white" />,
@@ -54,7 +54,7 @@ Our specialized FBO coordination team works directly with flight crews and groun
 Enjoy priority handling with expedited customs and immigration processes, dedicated aircraft-side pickup, and luxury amenities including refreshments and Wi-Fi during your ground transfer.
 
 Our professional chauffeurs are trained in executive protocol and discretion, ensuring your privacy and comfort throughout your journey in the Dallas-Fort Worth metroplex.`,
-    img: "/business-car.jpeg",
+    img: "/dallas-airport.jpeg",
   },
   {
     title: "FBO Coordination Services",
@@ -84,7 +84,7 @@ const coreServices = [
     title: "Flight Monitoring Service",
     icon: <Radar className="w-6 h-6 text-white" />,
     desc: [
-      "Real-time flight tracking and delay adjustments",
+      "Real-time flight tracking and delay adjustments (when owner allows tracking)",
       "Automatic pickup time modifications",
       "Weather and air traffic delay compensation",
       "24/7 operations center monitoring",
@@ -99,6 +99,7 @@ const coreServices = [
       "Wi-Fi and mobile office amenities",
       "Refreshment service during transfer",
       "Climate-controlled luxury interiors",
+      "Crew transportation available",
     ],
     cta: "Book Now",
   },
@@ -124,7 +125,7 @@ export default function PrivateJetFBOPage() {
       <ServicesHero
         heroImage="/hero-cover.jpeg"
         title="Private Jet & FBO Coordination"
-        description="Seamless ground transportation coordination with all DFW-area FBOs. Experience white-glove service from aircraft steps to your destination with real-time flight tracking and luxury fleet options."
+        description="Seamless ground transportation coordination with all DFW-area FBOs. Experience white-glove service from aircraft steps to your destination with real-time flight tracking (when owner allows tracking) and luxury fleet options."
       >
         <BookingForm />
       </ServicesHero>

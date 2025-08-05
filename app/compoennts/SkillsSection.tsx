@@ -17,27 +17,6 @@ pricing engine.`,
     icon: "/skills6.svg",
   },
   {
-    name: "AI Automation",
-    description: `Intelligent workflows that learn and adapt
-to your business patterns, reducing
-manual tasks by 80%.`,
-    icon: "/skills1.svg",
-  },
-  {
-    name: "Real-time Analytics",
-    description: `Advanced data visualization with
-predictive insights to make informed
-decisions faster.`,
-    icon: "/skills2.svg",
-  },
-  {
-    name: "Enterprise Security",
-    description: `Bank-grade security with end-to-end
-encryption and compliance with global
-standards.`,
-    icon: "/skills3.svg",
-  },
-  {
     name: "AI-Powered Intelligence",
     description: `Smart route optimization, predictive
 scheduling, and real-time traffic analysis
