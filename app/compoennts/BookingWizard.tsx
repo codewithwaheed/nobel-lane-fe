@@ -230,24 +230,6 @@ export default function BookingWizard({
         {renderStepContent()}
       </div>
 
-      {/* Footer Actions - Only show for steps that need manual navigation */}
-      {currentStep === 1 && !canProceed() && (
-        <div className="fixed bottom-0 left-0 right-0 bg-white border-t">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-            <div className="flex justify-between">
-              <div /> {/* Spacer since there's no back on step 1 */}
-              <Button
-                onClick={handleNext}
-                disabled={!canProceed()}
-                className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600"
-              >
-                Continue
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
-
       {currentStep === 2 && !bookingData.selectedVehicle && (
         <div className="fixed bottom-0 left-0 right-0 bg-white border-t">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
