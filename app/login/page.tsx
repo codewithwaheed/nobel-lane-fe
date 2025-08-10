@@ -47,10 +47,20 @@ function LoginForm({
     setError(null);
 
     try {
+      const email = formData.email.trim().toLowerCase();
+      const password = formData.password;
+
+      // Disallow leading/trailing spaces in password to avoid hard-to-debug mismatches
+      if (password !== password.trim()) {
+        setError("Password cannot start or end with a space.");
+        setLoading(false);
+        return;
+      }
+
       const { data, error: signInError } =
         await supabase.auth.signInWithPassword({
-          email: formData.email,
-          password: formData.password,
+          email,
+          password,
         });
 
       if (signInError) {
@@ -86,6 +96,7 @@ function LoginForm({
         setError("Sign in failed. Please try again.");
       }
     } catch (authError: unknown) {
+      console.error("Sign-in error", authError);
       const errorMessage =
         authError instanceof Error
           ? authError.message
@@ -120,7 +131,17 @@ function LoginForm({
     setLoading(true);
     setError(null);
 
-    const passwordError = validatePassword(formData.password);
+    const email = formData.email.trim().toLowerCase();
+    const password = formData.password;
+
+    // Disallow leading/trailing spaces in password
+    if (password !== password.trim()) {
+      setError("Password cannot start or end with a space.");
+      setLoading(false);
+      return;
+    }
+
+    const passwordError = validatePassword(password);
     if (passwordError) {
       setError(passwordError);
       setLoading(false);
@@ -129,8 +150,8 @@ function LoginForm({
 
     try {
       const { data, error: signUpError } = await supabase.auth.signUp({
-        email: formData.email,
-        password: formData.password,
+        email,
+        password,
         options: {
           data: {
             first_name: formData.firstName,
@@ -138,49 +159,45 @@ function LoginForm({
             phone: formData.phone,
             company: formData.company,
           },
+          // Ensure the email confirmation link redirects back to our app
+          emailRedirectTo:
+            typeof location !== "undefined"
+              ? `${location.origin}/login`
+              : undefined,
         },
       });
 
       if (signUpError) {
         if (signUpError.message.includes("Invalid email")) {
           setError("Please enter a valid email address.");
+        } else if (
+          signUpError.message.includes("already registered") ||
+          signUpError.message.includes("already exists")
+        ) {
+          setError(
+            "An account with this email already exists. Please sign in instead."
+          );
+          setMode("signin");
         } else if (signUpError.message.includes("Password")) {
           setError("Password does not meet security requirements.");
         } else {
           setError(signUpError.message);
         }
       } else if (data.user) {
-        // Check if this is actually a new user or existing user
-        // Supabase returns user data even for existing emails, but with different identifiers
-        const currentTime = new Date().getTime();
-        const userCreatedTime = new Date(data.user.created_at).getTime();
-        const timeDiff = currentTime - userCreatedTime;
-
-        // If user was created more than 10 seconds ago, it's likely an existing user
-        // (since signup just happened, new users should have recent created_at)
-        if (timeDiff > 10000) {
-          setError(
-            "An account with this email already exists. Please sign in instead."
+        // Successful sign up: if email confirmations are enabled, session will be null
+        if (!data.session) {
+          setSuccess(
+            "Account created successfully! Please check your email for verification before signing in."
           );
-          setTimeout(() => {
-            setMode("signin");
-            setError(null);
-          }, 3000);
         } else {
-          // This is a genuinely new user
-          if (!data.session) {
-            setSuccess(
-              "Account created successfully! Please check your email for verification before signing in."
-            );
-          } else {
-            setSuccess("Account created and verified successfully!");
-          }
-          setMode("signin");
+          setSuccess("Account created and verified successfully!");
         }
+        setMode("signin");
       } else {
         setError("Failed to create account. Please try again.");
       }
     } catch (authError: unknown) {
+      console.error("Sign-up error", authError);
       const errorMessage =
         authError instanceof Error
           ? authError.message
@@ -217,7 +234,11 @@ function LoginForm({
   };
 
   return (
-    <div className={`w-full max-w-md mx-auto ${className}`}>
+    <div
+      className={`w-full max-w-md mx-auto ${
+        mode === "signin" ? "md:-mt-8 lg:-mt-16" : ""
+      } ${className}`}
+    >
       {/* Header */}
       {showTitle && (
         <div className="text-center mb-8">
@@ -554,7 +575,7 @@ export default function LoginPage() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, ease: "easeOut" }}
-        className="w-full max-w-md -mt-16"
+        className="w-full max-w-md"
       >
         <LoginForm />
       </motion.div>
@@ -562,5 +583,5 @@ export default function LoginPage() {
   );
 }
 
-// Export the reusable component
+// Export the reusable component separately
 export { LoginForm };

@@ -10,6 +10,8 @@ const compat = new FlatCompat({
 });
 
 const eslintConfig = [
+  // Ignore Deno-based Supabase Edge Functions from Next.js linting
+  { ignores: ["supabase/functions/**"] },
   ...compat.extends("next/core-web-vitals", "next/typescript"),
 ];
 

@@ -9,7 +9,6 @@ import {
   Plane,
   MessageSquare,
   Phone,
-  Mail,
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";

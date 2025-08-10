@@ -1,8 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Calendar } from "@/components/ui/calendar";
 import { CalendarIcon } from "lucide-react";
@@ -21,6 +20,8 @@ import {
 import { cn } from "@/lib/utils";
 import { format } from "date-fns/format";
 import type { BookingFormData } from "@/lib/booking-storage";
+import AddressAutocomplete from "./AddressAutocomplete";
+import { createClient } from "@/utils/supabase/client";
 
 interface TripDetailsProps {
   bookingData: BookingFormData;
@@ -31,14 +32,21 @@ export default function TripDetails({
   bookingData,
   onSubmit,
 }: TripDetailsProps) {
+  const supabase = useMemo(() => createClient(), []);
   const [formData, setFormData] = useState({
     type: bookingData.type || "one-way",
     from: bookingData.from || "",
     to: bookingData.to || "",
     duration: bookingData.duration || "",
-    date: bookingData.date ? new Date(bookingData.date) : null,
+    date: bookingData.date ? new Date(bookingData.date) : (null as Date | null),
     time: bookingData.time || "",
     passengers: bookingData.passengers || 1,
+    fromPlaceId: bookingData.fromPlaceId,
+    toPlaceId: bookingData.toPlaceId,
+    fromLat: bookingData.fromLat,
+    fromLng: bookingData.fromLng,
+    toLat: bookingData.toLat,
+    toLng: bookingData.toLng,
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -52,6 +60,33 @@ export default function TripDetails({
     // Clear error when user starts typing
     if (errors[field]) {
       setErrors((prev) => ({ ...prev, [field]: "" }));
+    }
+  };
+
+  const fetchPlaceDetails = async (placeId: string) => {
+    type PlaceDetailsResult = {
+      result?: {
+        formatted_address?: string;
+        geometry?: { location?: { lat?: number; lng?: number } };
+      };
+    };
+    try {
+      const { data, error } =
+        await supabase.functions.invoke<PlaceDetailsResult>("place-details", {
+          body: { placeId },
+          headers: { "Content-Type": "application/json" },
+        });
+      if (error) throw error;
+      const geometry = data?.result?.geometry?.location;
+      const formatted = data?.result?.formatted_address;
+      return {
+        lat: typeof geometry?.lat === "number" ? geometry.lat : undefined,
+        lng: typeof geometry?.lng === "number" ? geometry.lng : undefined,
+        formatted,
+      } as { lat?: number; lng?: number; formatted?: string };
+    } catch (e) {
+      console.error("Failed to fetch place details", e);
+      return {} as { lat?: number; lng?: number; formatted?: string };
     }
   };
 
@@ -86,7 +121,7 @@ export default function TripDetails({
     e.preventDefault();
 
     if (validateForm()) {
-      const submissionData = {
+      const submissionData: Partial<BookingFormData> = {
         ...formData,
         date: formData.date ? formData.date.toISOString().split("T")[0] : "",
       };
@@ -195,17 +230,23 @@ export default function TripDetails({
               <Label htmlFor="from" className="text-sm font-medium">
                 From
               </Label>
-              <Input
+              <AddressAutocomplete
                 id="from"
-                type="text"
-                placeholder="Address, airport, hotel, ..."
                 value={formData.from}
-                onChange={(e) => handleChange("from", e.target.value)}
-                className={`mt-1 h-11 ${errors.from ? "border-red-500" : ""}`}
+                placeholder="Address, airport, hotel, ..."
+                onChange={(v) => handleChange("from", v)}
+                onSelect={async (s) => {
+                  handleChange("from", s.description);
+                  handleChange("fromPlaceId", s.place_id);
+                  const det = await fetchPlaceDetails(s.place_id);
+                  if (det.lat && det.lng) {
+                    handleChange("fromLat", det.lat);
+                    handleChange("fromLng", det.lng);
+                  }
+                }}
+                error={errors.from}
+                className="mt-1 h-11"
               />
-              {errors.from && (
-                <p className="text-sm text-red-500 mt-1">{errors.from}</p>
-              )}
             </div>
 
             {formData.type === "one-way" && (
@@ -213,17 +254,23 @@ export default function TripDetails({
                 <Label htmlFor="to" className="text-sm font-medium">
                   To
                 </Label>
-                <Input
+                <AddressAutocomplete
                   id="to"
-                  type="text"
-                  placeholder="Address, airport, hotel, ..."
                   value={formData.to}
-                  onChange={(e) => handleChange("to", e.target.value)}
-                  className={`mt-1 h-11 ${errors.to ? "border-red-500" : ""}`}
+                  placeholder="Address, airport, hotel, ..."
+                  onChange={(v) => handleChange("to", v)}
+                  onSelect={async (s) => {
+                    handleChange("to", s.description);
+                    handleChange("toPlaceId", s.place_id);
+                    const det = await fetchPlaceDetails(s.place_id);
+                    if (det.lat && det.lng) {
+                      handleChange("toLat", det.lat);
+                      handleChange("toLng", det.lng);
+                    }
+                  }}
+                  error={errors.to}
+                  className="mt-1 h-11"
                 />
-                {errors.to && (
-                  <p className="text-sm text-red-500 mt-1">{errors.to}</p>
-                )}
               </div>
             )}
 

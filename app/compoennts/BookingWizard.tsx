@@ -14,6 +14,9 @@ import {
   clearBookingData,
 } from "@/lib/booking-storage";
 import type { BookingFormData, VehicleOption } from "@/lib/booking-storage";
+import { createClient } from "@/utils/supabase/client";
+import type { User } from "@supabase/supabase-js";
+import { LoginForm } from "@/app/login/page";
 
 interface BookingWizardProps {
   isQuote: boolean;
@@ -57,6 +60,21 @@ export default function BookingWizard({
     );
   });
 
+  const [user, setUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    const supabase = createClient();
+    // Initial fetch
+    supabase.auth.getUser().then(({ data }) => setUser(data.user ?? null));
+    // Subscribe to auth changes
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+    return () => {
+      sub.subscription.unsubscribe();
+    };
+  }, []);
+
   // Determine starting step based on existing data
   const [currentStep, setCurrentStep] = useState(() => {
     const saved = getBookingData();
@@ -67,8 +85,22 @@ export default function BookingWizard({
     return 1; // Otherwise start from trip details
   });
 
-  const currentSteps = isQuote ? quoteSteps : steps;
-  const maxStep = isQuote ? 4 : 5;
+  // Build steps dynamically: insert Sign In before Payment when not logged in (booking flow only)
+  const derivedSteps = isQuote
+    ? quoteSteps
+    : user
+    ? steps
+    : [
+        { id: 1, name: "Trip Details", description: "Where and when" },
+        { id: 2, name: "Service", description: "Choose your ride" },
+        { id: 3, name: "Pickup Info", description: "Additional information" },
+        { id: 4, name: "Sign In", description: "Access your account" },
+        { id: 5, name: "Payment", description: "Secure checkout" },
+        { id: 6, name: "Confirmation", description: "All set!" },
+      ];
+
+  const maxStep = derivedSteps.length;
+  const currentStepName = derivedSteps[currentStep - 1]?.name;
 
   // Save data whenever it changes
   useEffect(() => {
@@ -138,33 +170,40 @@ export default function BookingWizard({
   };
 
   const canProceed = () => {
-    switch (currentStep) {
-      case 1:
+    switch (currentStepName) {
+      case "Trip Details":
         return !!(bookingData.from && bookingData.date && bookingData.time);
-      case 2:
+      case "Service":
         return !!bookingData.selectedVehicle;
-      case 3:
-        if (isQuote) {
-          return !!(bookingData.phone || bookingData.email);
-        }
+      case "Contact":
+        return !!(bookingData.phone || bookingData.email);
+      case "Pickup Info":
         return true; // Booking flow doesn't require additional info
-      case 4:
-        return true; // Payment validation handled in component
+      case "Sign In":
+        return false; // Controlled by LoginForm submit
+      case "Payment":
       default:
-        return true;
+        return true; // Payment validation handled in component
     }
   };
 
+  // If user logs in while on the Sign In step, proceed automatically
+  useEffect(() => {
+    if (currentStepName === "Sign In" && user) {
+      setCurrentStep((s) => Math.min(s + 1, maxStep));
+    }
+  }, [currentStepName, user, maxStep]);
+
   const renderStepContent = () => {
-    switch (currentStep) {
-      case 1:
+    switch (currentStepName) {
+      case "Trip Details":
         return (
           <TripDetails
             bookingData={bookingData}
             onSubmit={handleTripDetailsSubmit}
           />
         );
-      case 2:
+      case "Service":
         return (
           <VehicleSelection
             selectedVehicle={bookingData.selectedVehicle}
@@ -176,7 +215,7 @@ export default function BookingWizard({
             canGoPrevious={currentStep > 1}
           />
         );
-      case 3:
+      case "Pickup Info":
         return (
           <AdditionalInfo
             isQuote={isQuote}
@@ -185,7 +224,20 @@ export default function BookingWizard({
             onBack={handleBack}
           />
         );
-      case 4:
+      case "Sign In":
+        return (
+          <div className="max-w-md mx-auto">
+            <LoginForm
+              showTitle={false}
+              className="mt-0 md:mt-0 lg:mt-0"
+              onSuccess={(u) => {
+                // Update local user state; step will auto-advance via effect
+                setUser(u as User);
+              }}
+            />
+          </div>
+        );
+      case "Payment":
         if (isQuote) {
           return (
             <Confirmation
@@ -202,10 +254,10 @@ export default function BookingWizard({
             onBack={handleBack}
           />
         );
-      case 5:
+      case "Confirmation":
         return (
           <Confirmation
-            isQuote={false}
+            isQuote={!!isQuote}
             bookingData={bookingData}
             onStartNew={handleStartNew}
           />
@@ -219,7 +271,7 @@ export default function BookingWizard({
     <div className="min-h-screen bg-gray-50 pb-16 sm:pb-20">
       {/* Merged Header + Progress */}
       <WizardProgress
-        steps={currentSteps}
+        steps={derivedSteps}
         currentStep={currentStep}
         title={isQuote ? "Request Quote" : "Book Your Trip"}
         onBack={onClose}
@@ -230,7 +282,7 @@ export default function BookingWizard({
         {renderStepContent()}
       </div>
 
-      {currentStep === 2 && !bookingData.selectedVehicle && (
+      {currentStepName === "Service" && !bookingData.selectedVehicle && (
         <div className="fixed bottom-0 left-0 right-0 bg-white border-t">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
             <div className="flex justify-between">

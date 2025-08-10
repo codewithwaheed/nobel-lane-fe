@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -18,6 +18,7 @@ import {
   Bars3Icon,
   XMarkIcon,
   ChevronDownIcon,
+  UserCircleIcon,
 } from "@heroicons/react/24/outline";
 import {
   BuildingOffice2Icon,
@@ -26,6 +27,9 @@ import {
 } from "@heroicons/react/24/solid";
 import { Button } from "@/components/ui/button";
 import PhoneCall from "./PhoneCall";
+import { createClient } from "@/utils/supabase/client";
+import type { User } from "@supabase/supabase-js";
+import { useRouter } from "next/navigation";
 
 // Plane icon component (for private jets)
 const PlaneIcon = ({ className }: { className?: string }) => (
@@ -86,6 +90,37 @@ export default function Header({
   setIsBookingModalOpen: (open: boolean) => void;
 }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+  const router = useRouter();
+
+  useEffect(() => {
+    const supabase = createClient();
+
+    // Initial fetch
+    supabase.auth.getUser().then(({ data }) => {
+      setUser(data.user ?? null);
+    });
+
+    // Subscribe to auth changes
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => {
+      sub.subscription.unsubscribe();
+    };
+  }, []);
+
+  const handleSignOut = async () => {
+    try {
+      const supabase = createClient();
+      await supabase.auth.signOut();
+      setUser(null);
+      router.replace("/");
+    } catch (e) {
+      console.error("Error signing out", e);
+    }
+  };
 
   return (
     <header className="bg-white border-b border-gray-200 dark:border-gray-700">
@@ -93,7 +128,7 @@ export default function Header({
         aria-label="Global"
         className="mx-auto flex max-w-7xl items-center justify-between p-6 pb-0 md:pb-6 lg:px-8"
       >
-        <div className="flex lg:flex-1">
+        <div className="flex">
           <Link href="/" className="-m-1.5 p-1.5">
             <span className="sr-only"> Nobel Lane</span>
             <Image
@@ -115,7 +150,7 @@ export default function Header({
             <Bars3Icon aria-hidden="true" className="size-6" />
           </button>
         </div>
-        <PopoverGroup className="hidden lg:flex lg:gap-x-8 items-center">
+        <PopoverGroup className="hidden lg:flex items-center lg:gap-x-6 lg:ml-6 xl:ml-8">
           <div className="relative group">
             <Popover className="relative">
               {() => (
@@ -174,14 +209,39 @@ export default function Header({
             Contact
           </Link>
         </PopoverGroup>
-        <div className="hidden lg:flex lg:flex-1 lg:justify-end">
+        <div className="hidden lg:flex lg:flex-1 lg:items-center lg:justify-end gap-3">
           <PhoneCall />
+          {user ? (
+            <Popover className="relative">
+              <PopoverButton
+                aria-label="Account"
+                className="text-gray-700 hover:text-amber-600 outline-none cursor-pointer"
+              >
+                <UserCircleIcon className="w-8 h-8" />
+              </PopoverButton>
+              <PopoverPanel className="absolute right-0 z-50 mt-2 w-44 overflow-hidden rounded-md bg-white shadow-lg ring-1 ring-gray-900/5">
+                <button
+                  onClick={handleSignOut}
+                  className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                >
+                  Sign out
+                </button>
+              </PopoverPanel>
+            </Popover>
+          ) : (
+            <Link
+              href="/login"
+              className="text-sm font-semibold text-gray-900 hover:text-amber-600 whitespace-nowrap"
+            >
+              Sign in
+            </Link>
+          )}
           <Link href="/book-now?type=quote">
             <Button variant="outline" className="font-semibold">
               Get Quote
             </Button>
           </Link>
-          <Link href="/book-now" className="ml-3">
+          <Link href="/book-now">
             <Button variant="primary-linear" className="font-semibold">
               Book Now <span aria-hidden="true">&rarr;</span>
             </Button>
@@ -193,14 +253,16 @@ export default function Header({
           <div className="flex-1">
             <PhoneCall />
           </div>
-          <Button
-            variant="primary-linear"
-            size="sm"
-            className="font-semibold flex-1 ml-2"
-            onClick={() => setIsBookingModalOpen(true)}
-          >
-            Book Now <span aria-hidden="true">&rarr;</span>
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="primary-linear"
+              size="sm"
+              className="font-semibold ml-1"
+              onClick={() => setIsBookingModalOpen(true)}
+            >
+              Book Now <span aria-hidden="true">&rarr;</span>
+            </Button>
+          </div>
         </div>
       </div>
       <Dialog
@@ -286,6 +348,30 @@ export default function Header({
                 </Link>
               </div>
               <div className="py-6">
+                {/* Auth button moved into mobile menu */}
+                {user ? (
+                  <Link href="/account" className="block mb-4">
+                    <Button
+                      variant="outline"
+                      size="lg"
+                      className="font-semibold w-full"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      My Account
+                    </Button>
+                  </Link>
+                ) : (
+                  <Link href="/login" className="block mb-4">
+                    <Button
+                      variant="outline"
+                      size="lg"
+                      className="font-semibold w-full"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      Sign in
+                    </Button>
+                  </Link>
+                )}
                 <Link href="/book-now?type=quote" className="block">
                   <Button
                     variant="outline"

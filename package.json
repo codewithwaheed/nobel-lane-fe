@@ -6,7 +6,11 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "fx:place-details": "supabase functions serve place-details --env-file .env.local --no-verify-jwt",
+    "fx:places-autocomplete": "supabase functions serve places-autocomplete --env-file .env.local --no-verify-jwt",
+    "fx:get-pricing": "supabase functions serve get-pricing --env-file .env.local --no-verify-jwt",
+    "fx:all": "npm-run-all --parallel fx:place-details fx:places-autocomplete fx:get-pricing"
   },
   "dependencies": {
     "@headlessui/react": "^2.2.6",
@@ -45,6 +49,7 @@
     "autoprefixer": "^10.4.21",
     "eslint": "^9",
     "eslint-config-next": "15.4.4",
+    "supabase": "^2.33.9",
     "tailwindcss": "^4",
     "tw-animate-css": "^1.3.6",
     "typescript": "^5"

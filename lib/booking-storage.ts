@@ -30,6 +30,14 @@ export interface BookingFormData {
   isQuote: boolean;
   currentStep: number;
   completedSteps: number[];
+
+  // Place details (optional, set when using autocomplete)
+  fromPlaceId?: string;
+  toPlaceId?: string;
+  fromLat?: number;
+  fromLng?: number;
+  toLat?: number;
+  toLng?: number;
 }
 
 export const BOOKING_STORAGE_KEY = "bookingFormData";
@@ -55,7 +63,7 @@ export function saveBookingData(
       ...data,
       date: data.date.toISOString(),
       submittedAt: new Date().toISOString(),
-    };
+    } as BookingFormData;
 
     sessionStorage.setItem(BOOKING_STORAGE_KEY, JSON.stringify(storageData));
     return true;
@@ -72,8 +80,8 @@ export function updateBookingData(updates: Partial<BookingFormData>): boolean {
   try {
     if (typeof window === "undefined") return false;
 
-    const existing = getBookingData() || {};
-    const updated = { ...existing, ...updates };
+    const existing = getBookingData() || ({} as BookingFormData);
+    const updated = { ...existing, ...updates } as BookingFormData;
 
     sessionStorage.setItem(BOOKING_STORAGE_KEY, JSON.stringify(updated));
     return true;
