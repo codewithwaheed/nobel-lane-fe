@@ -8,6 +8,7 @@ export interface VehicleOption {
   bags: number;
   price: number;
   description: string;
+  vehicleId: string; // Backend vehicle ID for pricing API
 }
 
 export interface BookingFormData {
@@ -31,6 +32,10 @@ export interface BookingFormData {
   currentStep: number;
   completedSteps: number[];
 
+  // Extra stops
+  extraStopsRequired?: boolean;
+  extraStopsCount?: number;
+
   // Place details (optional, set when using autocomplete)
   fromPlaceId?: string;
   toPlaceId?: string;
@@ -38,6 +43,12 @@ export interface BookingFormData {
   fromLng?: number;
   toLat?: number;
   toLng?: number;
+  fromZipcode?: string;
+  toZipcode?: string;
+  fromCity?: string;
+  toCity?: string;
+  fromState?: string;
+  toState?: string;
 }
 
 export const BOOKING_STORAGE_KEY = "bookingFormData";
@@ -53,7 +64,7 @@ export const defaultBookingData: Partial<BookingFormData> = {
  * Save booking form data to sessionStorage
  */
 export function saveBookingData(
-  data: Omit<BookingFormData, "submittedAt" | "date"> & { date: Date }
+  data: Omit<BookingFormData, "submittedAt" | "date"> & { date: Date },
 ): boolean {
   try {
     // Check if we're in a browser environment
@@ -129,45 +140,63 @@ export function clearBookingData(): boolean {
 export const vehicleFleet: VehicleOption[] = [
   {
     id: 1,
+    name: "Executive Sedan",
+    image: "/standard-sedan.png",
+    passengers: 4,
+    bags: 2,
+    price: 110, // Fallback price - will be replaced by backend pricing
+    description:
+      "Executive-level sedan service with priority service and executive amenities.",
+    vehicleId: "sedan", // Backend vehicle ID
+  },
+  {
+    id: 2,
+    name: "Executive SUV",
+    image: "/luxury-suv.png",
+    passengers: 6,
+    bags: 4,
+    price: 129, // Fallback price - will be replaced by backend pricing
+    description:
+      "Professional executive transport with business amenities and phone chargers.",
+    vehicleId: "suv", // Backend vehicle ID
+  },
+  {
+    id: 3,
     name: "Luxury Sedan",
     image: "/luxury-sedan.png",
     passengers: 4,
     bags: 2,
-    price: 85,
-    description: "A comfortable luxury sedan for up to 4 passengers.",
+    price: 285, // Fallback price - will be replaced by backend pricing
+    description:
+      "Premium comfort and style with premium leather seats and WiFi available.",
+    vehicleId: "luxury_suv", // Backend vehicle ID (maps to luxury_suv pricing)
   },
   {
-    id: 2,
+    id: 4,
     name: "Luxury SUV",
     image: "/luxury-suv.png",
     passengers: 6,
     bags: 4,
-    price: 125,
-    description: "A spacious SUV for up to 6 passengers.",
+    price: 285, // Fallback price - will be replaced by backend pricing
+    description:
+      "Spacious luxury for groups, seats up to 6 with premium sound system.",
+    vehicleId: "luxury_suv", // Backend vehicle ID
   },
   {
-    id: 3,
+    id: 5,
     name: "Sprinter Van",
     image: "/sprinter-van.png",
-    passengers: 12,
-    bags: 8,
-    price: 180,
-    description: "A large sprinter van for group travel.",
+    passengers: 13,
+    bags: 10,
+    price: 199, // Fallback price - will be replaced by backend pricing
+    description:
+      "Large group transportation, seats up to 13 with entertainment system.",
+    vehicleId: "sprinter", // Backend vehicle ID
   },
-  {
-    id: 4,
-    name: "Standard Sedan",
-    image: "/standard-sedan.png",
-    passengers: 4,
-    bags: 2,
-    price: 65,
-    description: "A reliable standard sedan for comfortable transportation.",
-  },
-];
-
-/**
+]; /**
  * Check if booking data exists and is recent (within 24 hours)
  */
+
 export function hasRecentBookingData(): boolean {
   const data = getBookingData();
   if (!data?.submittedAt) return false;

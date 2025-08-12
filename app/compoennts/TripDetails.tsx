@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Calendar } from "@/components/ui/calendar";
@@ -21,7 +21,6 @@ import { cn } from "@/lib/utils";
 import { format } from "date-fns/format";
 import type { BookingFormData } from "@/lib/booking-storage";
 import AddressAutocomplete from "./AddressAutocomplete";
-import { createClient } from "@/utils/supabase/client";
 
 interface TripDetailsProps {
   bookingData: BookingFormData;
@@ -32,7 +31,6 @@ export default function TripDetails({
   bookingData,
   onSubmit,
 }: TripDetailsProps) {
-  const supabase = useMemo(() => createClient(), []);
   const [formData, setFormData] = useState({
     type: bookingData.type || "one-way",
     from: bookingData.from || "",
@@ -47,6 +45,12 @@ export default function TripDetails({
     fromLng: bookingData.fromLng,
     toLat: bookingData.toLat,
     toLng: bookingData.toLng,
+    fromZipcode: bookingData.fromZipcode,
+    toZipcode: bookingData.toZipcode,
+    fromCity: bookingData.fromCity,
+    toCity: bookingData.toCity,
+    fromState: bookingData.fromState,
+    toState: bookingData.toState,
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -60,33 +64,6 @@ export default function TripDetails({
     // Clear error when user starts typing
     if (errors[field]) {
       setErrors((prev) => ({ ...prev, [field]: "" }));
-    }
-  };
-
-  const fetchPlaceDetails = async (placeId: string) => {
-    type PlaceDetailsResult = {
-      result?: {
-        formatted_address?: string;
-        geometry?: { location?: { lat?: number; lng?: number } };
-      };
-    };
-    try {
-      const { data, error } =
-        await supabase.functions.invoke<PlaceDetailsResult>("place-details", {
-          body: { placeId },
-          headers: { "Content-Type": "application/json" },
-        });
-      if (error) throw error;
-      const geometry = data?.result?.geometry?.location;
-      const formatted = data?.result?.formatted_address;
-      return {
-        lat: typeof geometry?.lat === "number" ? geometry.lat : undefined,
-        lng: typeof geometry?.lng === "number" ? geometry.lng : undefined,
-        formatted,
-      } as { lat?: number; lng?: number; formatted?: string };
-    } catch (e) {
-      console.error("Failed to fetch place details", e);
-      return {} as { lat?: number; lng?: number; formatted?: string };
     }
   };
 
@@ -235,14 +212,25 @@ export default function TripDetails({
                 value={formData.from}
                 placeholder="Address, airport, hotel, ..."
                 onChange={(v) => handleChange("from", v)}
-                onSelect={async (s) => {
-                  handleChange("from", s.description);
-                  handleChange("fromPlaceId", s.place_id);
-                  const det = await fetchPlaceDetails(s.place_id);
-                  if (det.lat && det.lng) {
-                    handleChange("fromLat", det.lat);
-                    handleChange("fromLng", det.lng);
+                onSelect={async (placeDetails) => {
+                  handleChange("from", placeDetails.formatted_address);
+                  handleChange("fromPlaceId", placeDetails.place_id);
+
+                  // Set coordinates if available
+                  if (placeDetails.geometry?.location) {
+                    handleChange("fromLat", placeDetails.geometry.location.lat);
+                    handleChange("fromLng", placeDetails.geometry.location.lng);
                   }
+
+                  // Set address components
+                  if (placeDetails.zipcode)
+                    handleChange("fromZipcode", placeDetails.zipcode);
+                  if (placeDetails.city)
+                    handleChange("fromCity", placeDetails.city);
+                  if (placeDetails.state)
+                    handleChange("fromState", placeDetails.state);
+
+                  console.log("From address selected:", placeDetails);
                 }}
                 error={errors.from}
                 className="mt-1 h-11"
@@ -259,14 +247,26 @@ export default function TripDetails({
                   value={formData.to}
                   placeholder="Address, airport, hotel, ..."
                   onChange={(v) => handleChange("to", v)}
-                  onSelect={async (s) => {
-                    handleChange("to", s.description);
-                    handleChange("toPlaceId", s.place_id);
-                    const det = await fetchPlaceDetails(s.place_id);
-                    if (det.lat && det.lng) {
-                      handleChange("toLat", det.lat);
-                      handleChange("toLng", det.lng);
+                  onSelect={async (placeDetails) => {
+                    console.log({ placeDetails });
+                    handleChange("to", placeDetails.formatted_address);
+                    handleChange("toPlaceId", placeDetails.place_id);
+
+                    // Set coordinates if available
+                    if (placeDetails.geometry?.location) {
+                      handleChange("toLat", placeDetails.geometry.location.lat);
+                      handleChange("toLng", placeDetails.geometry.location.lng);
                     }
+
+                    // Set address components
+                    if (placeDetails.zipcode)
+                      handleChange("toZipcode", placeDetails.zipcode);
+                    if (placeDetails.city)
+                      handleChange("toCity", placeDetails.city);
+                    if (placeDetails.state)
+                      handleChange("toState", placeDetails.state);
+
+                    console.log("To address selected:", placeDetails);
                   }}
                   error={errors.to}
                   className="mt-1 h-11"

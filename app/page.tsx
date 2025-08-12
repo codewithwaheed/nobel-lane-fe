@@ -16,7 +16,7 @@ export default function Home() {
       <FleetSection />
       <WhyChooseSection />
       <OurTeamSection />
-      <SkillsSection />
+      <SkillsSection title="Our Skills" />
       <ReviewsSection />
       <FAQSection />
     </div>

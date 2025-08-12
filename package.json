@@ -4,6 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
+    "dev:local": "NODE_ENV=development next dev --turbopack",
+    "dev:prod": "NODE_ENV=production next dev --turbopack",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
@@ -43,6 +45,7 @@
   "devDependencies": {
     "@eslint/eslintrc": "^3",
     "@tailwindcss/postcss": "^4",
+    "@types/google.maps": "^3.58.1",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",

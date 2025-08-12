@@ -80,8 +80,32 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const mapsApiKey =
+    process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ||
+    process.env.GOOGLE_MAPS_API_KEY;
+  const masked = mapsApiKey
+    ? mapsApiKey.slice(0, 6) + "..." + mapsApiKey.slice(-4)
+    : "(none)";
   return (
     <html lang="en">
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `console.info('[Maps] Using key (masked): ${masked}');${
+              !mapsApiKey
+                ? "console.warn('[Maps] No API key found in env (expected NEXT_PUBLIC_GOOGLE_MAPS_API_KEY or GOOGLE_MAPS_API_KEY)');"
+                : ""
+            }`,
+          }}
+        />
+        {mapsApiKey ? (
+          <script
+            async
+            defer
+            src={`https://maps.googleapis.com/maps/api/js?key=${mapsApiKey}&libraries=places`}
+          />
+        ) : null}
+      </head>
       <body
         className={`${poppins.variable} ${crimsonText.variable} antialiased font-sans overflow-x-hidden`}
       >

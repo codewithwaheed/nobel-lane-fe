@@ -11,6 +11,7 @@ import {
   Phone,
   ChevronLeft,
   ChevronRight,
+  Plus,
 } from "lucide-react";
 import type { BookingFormData } from "@/lib/booking-storage";
 
@@ -32,11 +33,13 @@ export default function AdditionalInfo({
     notes: bookingData.notes || "",
     phone: bookingData.phone || "",
     email: bookingData.email || "",
+    extraStopsRequired: bookingData.extraStopsRequired || false,
+    extraStopsCount: bookingData.extraStopsCount || 1,
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const handleChange = (field: string, value: string) => {
+  const handleChange = (field: string, value: string | boolean | number) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
 
     // Clear error when user starts typing
@@ -173,6 +176,67 @@ export default function AdditionalInfo({
                   </p>
                 </div>
 
+                {/* Extra Stops */}
+                <div className="lg:col-span-2 border-t border-gray-100 pt-6">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Plus className="w-5 h-5 text-amber-500" />
+                    <h3 className="text-lg font-semibold text-gray-900">
+                      Extra Stops
+                    </h3>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div className="flex items-center space-x-3">
+                      <input
+                        type="checkbox"
+                        id="extraStopsRequired"
+                        checked={formData.extraStopsRequired}
+                        onChange={(e) =>
+                          handleChange("extraStopsRequired", e.target.checked)
+                        }
+                        className="w-4 h-4 text-amber-500 bg-gray-100 border-gray-300 rounded focus:ring-amber-500 focus:ring-2"
+                      />
+                      <Label
+                        htmlFor="extraStopsRequired"
+                        className="text-sm font-medium text-gray-700"
+                      >
+                        Extra stops required
+                      </Label>
+                    </div>
+
+                    {formData.extraStopsRequired && (
+                      <div className="ml-7 space-y-2">
+                        <Label
+                          htmlFor="extraStopsCount"
+                          className="text-sm font-medium text-gray-700 block"
+                        >
+                          Number of extra stops
+                        </Label>
+                        <select
+                          id="extraStopsCount"
+                          value={formData.extraStopsCount}
+                          onChange={(e) =>
+                            handleChange(
+                              "extraStopsCount",
+                              parseInt(e.target.value)
+                            )
+                          }
+                          className="w-32 h-10 px-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                        >
+                          {[1, 2, 3, 4, 5].map((num) => (
+                            <option key={num} value={num}>
+                              {num}
+                            </option>
+                          ))}
+                        </select>
+                        <p className="text-xs text-gray-500">
+                          Each extra stop adds $10 to your total cost
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
                 {/* Special Requests */}
                 <div className="lg:col-span-2 border-t border-gray-100 pt-6">
                   <div className="flex items-center gap-2 mb-4">
@@ -239,6 +303,67 @@ export default function AdditionalInfo({
                       We&apos;ll track your flight for delays and adjust pickup
                       time accordingly.
                     </p>
+                  </div>
+                </div>
+
+                {/* Extra Stops */}
+                <div className="lg:col-span-2">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Plus className="w-5 h-5 text-amber-500" />
+                    <h3 className="text-lg font-semibold text-gray-900">
+                      Extra Stops
+                    </h3>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div className="flex items-center space-x-3">
+                      <input
+                        type="checkbox"
+                        id="extraStopsRequired"
+                        checked={formData.extraStopsRequired}
+                        onChange={(e) =>
+                          handleChange("extraStopsRequired", e.target.checked)
+                        }
+                        className="w-4 h-4 text-amber-500 bg-gray-100 border-gray-300 rounded focus:ring-amber-500 focus:ring-2"
+                      />
+                      <Label
+                        htmlFor="extraStopsRequired"
+                        className="text-sm font-medium text-gray-700"
+                      >
+                        Extra stops required
+                      </Label>
+                    </div>
+
+                    {formData.extraStopsRequired && (
+                      <div className="ml-7 space-y-2">
+                        <Label
+                          htmlFor="extraStopsCount"
+                          className="text-sm font-medium text-gray-700 block"
+                        >
+                          Number of extra stops
+                        </Label>
+                        <select
+                          id="extraStopsCount"
+                          value={formData.extraStopsCount}
+                          onChange={(e) =>
+                            handleChange(
+                              "extraStopsCount",
+                              parseInt(e.target.value)
+                            )
+                          }
+                          className="w-32 h-10 px-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                        >
+                          {[1, 2, 3, 4, 5].map((num) => (
+                            <option key={num} value={num}>
+                              {num}
+                            </option>
+                          ))}
+                        </select>
+                        <p className="text-xs text-gray-500">
+                          Each extra stop adds $10 to your total cost
+                        </p>
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -317,9 +442,9 @@ export default function AdditionalInfo({
         <div className="flex items-start gap-3 p-4 bg-green-50 rounded-lg border border-green-100">
           <div className="w-2 h-2 bg-green-500 rounded-full mt-2 flex-shrink-0"></div>
           <div>
-            <div className="font-medium text-gray-900 mb-1">Special Needs?</div>
+            <div className="font-medium text-gray-900 mb-1">Extra Stops</div>
             <span className="text-gray-600">
-              Child seats, wheelchair access, or extra stops available
+              Need multiple stops? Add up to 5 extra stops for just $10 each
             </span>
           </div>
         </div>

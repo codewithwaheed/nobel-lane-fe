@@ -213,6 +213,18 @@ export default function BookingWizard({
             onPrevious={handleBack}
             canGoNext={!!bookingData.selectedVehicle}
             canGoPrevious={currentStep > 1}
+            tripData={{
+              type: bookingData.type,
+              fromPlaceId: bookingData.fromPlaceId,
+              toPlaceId: bookingData.toPlaceId,
+              fromLat: bookingData.fromLat,
+              fromLng: bookingData.fromLng,
+              toLat: bookingData.toLat,
+              toLng: bookingData.toLng,
+              fromZipcode: bookingData.fromZipcode,
+              toZipcode: bookingData.toZipcode,
+              duration: bookingData.duration,
+            }}
           />
         );
       case "Pickup Info":

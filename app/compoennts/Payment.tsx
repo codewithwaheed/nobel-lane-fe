@@ -6,20 +6,25 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { CreditCard, Lock, Calendar, MapPin, Users, Car } from "lucide-react";
-import { VehicleOption } from "@/lib/booking-storage";
+import {
+  CreditCard,
+  Lock,
+  Calendar,
+  MapPin,
+  Users,
+  Car,
+  Info,
+} from "lucide-react";
+import { BookingFormData, VehicleOption } from "@/lib/booking-storage";
+import {
+  calculatePricingBreakdown,
+  calculatePricingExtras,
+  formatPrice,
+  getSmartRecommendations,
+} from "@/lib/pricing-logic";
 
 interface PaymentProps {
-  bookingData: {
-    from: string;
-    to?: string;
-    date: string;
-    time: string;
-    passengers: number;
-    selectedVehicle?: VehicleOption;
-    flightNumber?: string;
-    notes?: string;
-  };
+  bookingData: BookingFormData;
   onPaymentComplete: () => void;
   onBack: () => void;
 }
@@ -71,9 +76,10 @@ export default function Payment({
     }, 2000);
   };
 
-  const total = bookingData.selectedVehicle?.price || 0;
-  const serviceFee = Math.round(total * 0.05); // 5% service fee
-  const grandTotal = total + serviceFee;
+  // Calculate detailed pricing breakdown
+  const pricingBreakdown = calculatePricingBreakdown(bookingData);
+  const extras = calculatePricingExtras(bookingData);
+  const recommendations = getSmartRecommendations(bookingData);
 
   return (
     <div className="max-w-4xl mx-auto">
@@ -240,7 +246,9 @@ export default function Payment({
                 >
                   {isProcessing
                     ? "Processing..."
-                    : `Complete Payment $${grandTotal}`}
+                    : `Complete Payment ${formatPrice(
+                        pricingBreakdown.totalPrice
+                      )}`}
                 </Button>
               </div>
             </form>
@@ -307,36 +315,92 @@ export default function Payment({
 
             <Separator />
 
-            {/* Pricing Breakdown */}
+            {/* Smart Recommendations */}
+            {recommendations.length > 0 && (
+              <div className="space-y-2">
+                <h4 className="font-medium flex items-center gap-2">
+                  <Info className="w-4 h-4 text-blue-500" />
+                  Trip Details
+                </h4>
+                <div className="space-y-1">
+                  {recommendations.slice(0, 2).map((recommendation, index) => (
+                    <div
+                      key={index}
+                      className="text-xs text-gray-600 bg-blue-50 p-2 rounded"
+                    >
+                      {recommendation}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <Separator />
+
+            {/* Concise Pricing Breakdown */}
             <div className="space-y-3">
               <h4 className="font-medium">Price Breakdown</h4>
 
               <div className="space-y-2 text-sm">
+                {/* Base Rate */}
                 <div className="flex justify-between">
                   <span className="text-gray-600">Base fare</span>
-                  <span>${total}</span>
+                  <span className="font-medium">
+                    {formatPrice(pricingBreakdown.baseRate)}
+                  </span>
                 </div>
+
+                {/* Gratuity */}
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Service fee</span>
-                  <span>${serviceFee}</span>
+                  <span className="text-gray-600">Gratuity (20%)</span>
+                  <span className="font-medium">
+                    {formatPrice(pricingBreakdown.gratuityRate)}
+                  </span>
                 </div>
+
+                {/* Additional Services - Condensed */}
+                {pricingBreakdown.extrasRate > 0 && (
+                  <div className="flex justify-between">
+                    <div>
+                      <span className="text-gray-600">Additional services</span>
+                      <div className="text-xs text-gray-500">
+                        {[
+                          extras.flightTracking > 0 && "Flight tracking",
+                          extras.internationalArrival > 0 &&
+                            "International arrival",
+                          extras.earlyLatePickup > 0 && "Early/late pickup",
+                          extras.extraStops > 0 &&
+                            `${pricingBreakdown.breakdown.extraStopsCount} extra stops`,
+                          extras.dfwToll > 0 && "DFW toll",
+                        ]
+                          .filter(Boolean)
+                          .join(", ")}
+                      </div>
+                    </div>
+                    <span className="font-medium">
+                      {formatPrice(pricingBreakdown.extrasRate)}
+                    </span>
+                  </div>
+                )}
+
+                {/* Estimated Tolls */}
+                {pricingBreakdown.tollsRate > 0 && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Estimated tolls</span>
+                    <span className="font-medium">
+                      {formatPrice(pricingBreakdown.tollsRate)}
+                    </span>
+                  </div>
+                )}
+
                 <Separator />
-                <div className="flex justify-between font-semibold">
+
+                {/* Total */}
+                <div className="flex justify-between font-semibold text-lg">
                   <span>Total</span>
-                  <span>${grandTotal}</span>
+                  <span>{formatPrice(pricingBreakdown.totalPrice)}</span>
                 </div>
               </div>
-            </div>
-
-            {/* Cancellation Policy */}
-            <div className="bg-amber-50 p-4 rounded-lg">
-              <h5 className="font-medium text-amber-800 mb-2">
-                Cancellation Policy
-              </h5>
-              <p className="text-sm text-amber-700">
-                Free cancellation up to 24 hours before your trip. 50% refund
-                for cancellations within 24 hours.
-              </p>
             </div>
           </CardContent>
         </Card>
