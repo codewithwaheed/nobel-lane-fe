@@ -11,6 +11,8 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  // Ensure webhook endpoint can receive raw body
+  serverExternalPackages: ['stripe'],
 };
 
 export default nextConfig;

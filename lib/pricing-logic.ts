@@ -1,6 +1,33 @@
 // Enhanced pricing logic based on business requirements
 import type { BookingFormData } from "./booking-storage";
 
+// Utility function to normalize date and time for consistent parsing
+const normalizeDateTimeForParsing = (date: string, time: string): { normalizedDate: string, normalizedTime: string } => {
+  // Ensure date is in YYYY-MM-DD format
+  let normalizedDate = date;
+  if (date.includes('/')) {
+    // Convert MM/DD/YYYY or DD/MM/YYYY to YYYY-MM-DD
+    const parts = date.split('/');
+    if (parts.length === 3) {
+      const [first, second, third] = parts;
+      if (third.length === 4) {
+        // Assume MM/DD/YYYY format (US standard)
+        normalizedDate = `${third}-${first.padStart(2, '0')}-${second.padStart(2, '0')}`;
+      }
+    }
+  }
+  
+  // Ensure time is in HH:MM:SS format
+  let normalizedTime = time;
+  if (time.length === 5) { // HH:MM format
+    normalizedTime = `${time}:00`; // Add seconds
+  } else if (time.length === 4) { // H:MM format
+    normalizedTime = `0${time}:00`; // Add leading zero and seconds
+  }
+  
+  return { normalizedDate, normalizedTime };
+};
+
 export interface PricingBreakdown {
   baseRate: number;
   gratuityRate: number;
@@ -68,20 +95,33 @@ export const detectInternationalFlight = (flightNumber: string): boolean => {
 export const detectEarlyLatePickup = (date: string, time: string): boolean => {
   if (!date || !time) return false;
 
-  // Create pickup datetime in user's local timezone
-  const pickupDateTime = new Date(`${date}T${time}`);
+  try {
+    const { normalizedDate, normalizedTime } = normalizeDateTimeForParsing(date, time);
 
-  // Convert to Central Time Zone (America/Chicago)
-  const centralTime = new Intl.DateTimeFormat("en-US", {
-    timeZone: "America/Chicago",
-    hour: "numeric",
-    hour12: false,
-  }).format(pickupDateTime);
+    // Create pickup datetime in ISO format
+    const pickupDateTime = new Date(`${normalizedDate}T${normalizedTime}`);
+    
+    // Check if the date is valid
+    if (isNaN(pickupDateTime.getTime())) {
+      console.warn(`Invalid date/time provided: ${date}T${time} (normalized: ${normalizedDate}T${normalizedTime})`);
+      return false;
+    }
 
-  const hour = parseInt(centralTime);
+    // Convert to Central Time Zone (America/Chicago)
+    const centralTime = new Intl.DateTimeFormat("en-US", {
+      timeZone: "America/Chicago",
+      hour: "numeric",
+      hour12: false,
+    }).format(pickupDateTime);
 
-  // Early pickup: before 6 AM CT, Late pickup: after 10 PM CT (22:00)
-  return hour < 6 || hour >= 22;
+    const hour = parseInt(centralTime);
+
+    // Early pickup: before 6 AM CT, Late pickup: after 10 PM CT (22:00)
+    return hour < 6 || hour >= 22;
+  } catch (error) {
+    console.error(`Error detecting early/late pickup for ${date}T${time}:`, error);
+    return false;
+  }
 };
 
 // Helper function to get Central Time Zone hour for debugging
@@ -91,14 +131,28 @@ export const getCentralTimeHour = (
 ): number | null => {
   if (!date || !time) return null;
 
-  const pickupDateTime = new Date(`${date}T${time}`);
-  const centralTime = new Intl.DateTimeFormat("en-US", {
-    timeZone: "America/Chicago",
-    hour: "numeric",
-    hour12: false,
-  }).format(pickupDateTime);
+  try {
+    const { normalizedDate, normalizedTime } = normalizeDateTimeForParsing(date, time);
 
-  return parseInt(centralTime);
+    const pickupDateTime = new Date(`${normalizedDate}T${normalizedTime}`);
+    
+    // Check if the date is valid
+    if (isNaN(pickupDateTime.getTime())) {
+      console.warn(`Invalid date/time provided: ${date}T${time} (normalized: ${normalizedDate}T${normalizedTime})`);
+      return null;
+    }
+
+    const centralTime = new Intl.DateTimeFormat("en-US", {
+      timeZone: "America/Chicago",
+      hour: "numeric",
+      hour12: false,
+    }).format(pickupDateTime);
+
+    return parseInt(centralTime);
+  } catch (error) {
+    console.error(`Error getting Central Time hour for ${date}T${time}:`, error);
+    return null;
+  }
 };
 
 export const detectDFWAirport = (

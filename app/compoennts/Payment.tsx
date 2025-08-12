@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -17,6 +17,12 @@ import {
 } from "lucide-react";
 import { BookingFormData, VehicleOption } from "@/lib/booking-storage";
 import {
+  PaymentElement,
+  useElements,
+  useStripe,
+} from "@stripe/react-stripe-js";
+import StripeProvider from "@/app/contexts/StripeProvider";
+import {
   calculatePricingBreakdown,
   calculatePricingExtras,
   formatPrice,
@@ -29,57 +35,61 @@ interface PaymentProps {
   onBack: () => void;
 }
 
-export default function Payment({
+// Stripe Payment Form Component
+function PaymentForm({
   bookingData,
   onPaymentComplete,
   onBack,
 }: PaymentProps) {
+  const stripe = useStripe();
+  const elements = useElements();
   const [isProcessing, setIsProcessing] = useState(false);
-  const [paymentData, setPaymentData] = useState({
-    cardNumber: "",
-    expiryDate: "",
-    cvc: "",
-    cardholderName: "",
-    billingAddress: "",
-    billingCity: "",
-    billingZip: "",
-  });
-
-  const handleInputChange = (field: string, value: string) => {
-    setPaymentData((prev) => ({ ...prev, [field]: value }));
-  };
-
-  const formatCardNumber = (value: string) => {
-    // Remove all non-digits
-    const numbers = value.replace(/\D/g, "");
-    // Add spaces every 4 digits
-    return numbers.replace(/(\d{4})(?=\d)/g, "$1 ");
-  };
-
-  const formatExpiryDate = (value: string) => {
-    // Remove all non-digits
-    const numbers = value.replace(/\D/g, "");
-    // Add slash after 2 digits
-    if (numbers.length >= 2) {
-      return numbers.substring(0, 2) + "/" + numbers.substring(2, 4);
-    }
-    return numbers;
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsProcessing(true);
-
-    // Simulate payment processing
-    setTimeout(() => {
-      onPaymentComplete();
-    }, 2000);
-  };
+  const [errorMessage, setErrorMessage] = useState<string>("");
 
   // Calculate detailed pricing breakdown
   const pricingBreakdown = calculatePricingBreakdown(bookingData);
   const extras = calculatePricingExtras(bookingData);
   const recommendations = getSmartRecommendations(bookingData);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!stripe || !elements) {
+      return;
+    }
+
+    setIsProcessing(true);
+    setErrorMessage(""); // Clear any previous errors
+
+    try {
+      const { error, paymentIntent } = await stripe.confirmPayment({
+        elements,
+        confirmParams: {
+          return_url: `${window.location.origin}/booking-confirmation`,
+        },
+        redirect: "if_required",
+      });
+
+      if (error) {
+        // Show user-friendly error message
+        setErrorMessage(
+          error.message || "An unexpected error occurred. Please try again."
+        );
+        console.error("Payment failed:", error);
+      } else if (paymentIntent && paymentIntent.status === 'succeeded') {
+        // Payment succeeded
+        onPaymentComplete();
+      } else {
+        // Payment requires further action or failed
+        setErrorMessage("Payment was not completed. Please try again.");
+      }
+    } catch (error) {
+      console.error("Payment error:", error);
+      setErrorMessage("An unexpected error occurred. Please try again.");
+    } finally {
+      setIsProcessing(false);
+    }
+  };
 
   return (
     <div className="max-w-4xl mx-auto">
@@ -94,127 +104,40 @@ export default function Payment({
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Card Details */}
+              {/* Error Message */}
+              {errorMessage && (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                  <div className="flex items-center gap-2 text-red-700">
+                    <svg className="w-5 h-5" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                    </svg>
+                    <span className="font-medium">Payment Failed</span>
+                  </div>
+                  <p className="mt-2 text-sm text-red-600">{errorMessage}</p>
+                </div>
+              )}
+
+              {/* Stripe Payment Element */}
               <div className="space-y-4">
                 <div>
-                  <Label htmlFor="cardNumber">Card Number</Label>
-                  <Input
-                    id="cardNumber"
-                    type="text"
-                    placeholder="1234 5678 9012 3456"
-                    value={paymentData.cardNumber}
-                    onChange={(e) =>
-                      handleInputChange(
-                        "cardNumber",
-                        formatCardNumber(e.target.value)
-                      )
-                    }
-                    maxLength={19}
-                    required
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="expiryDate">Expiry Date</Label>
-                    <Input
-                      id="expiryDate"
-                      type="text"
-                      placeholder="MM/YY"
-                      value={paymentData.expiryDate}
-                      onChange={(e) =>
-                        handleInputChange(
-                          "expiryDate",
-                          formatExpiryDate(e.target.value)
-                        )
-                      }
-                      maxLength={5}
-                      required
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="cvc">CVC</Label>
-                    <Input
-                      id="cvc"
-                      type="text"
-                      placeholder="123"
-                      value={paymentData.cvc}
-                      onChange={(e) =>
-                        handleInputChange(
-                          "cvc",
-                          e.target.value.replace(/\D/g, "")
-                        )
-                      }
-                      maxLength={4}
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <Label htmlFor="cardholderName">Cardholder Name</Label>
-                  <Input
-                    id="cardholderName"
-                    type="text"
-                    placeholder="John Doe"
-                    value={paymentData.cardholderName}
-                    onChange={(e) =>
-                      handleInputChange("cardholderName", e.target.value)
-                    }
-                    required
-                  />
-                </div>
-              </div>
-
-              <Separator />
-
-              {/* Billing Address */}
-              <div className="space-y-4">
-                <h4 className="font-medium">Billing Address</h4>
-
-                <div>
-                  <Label htmlFor="billingAddress">Address</Label>
-                  <Input
-                    id="billingAddress"
-                    type="text"
-                    placeholder="123 Main Street"
-                    value={paymentData.billingAddress}
-                    onChange={(e) =>
-                      handleInputChange("billingAddress", e.target.value)
-                    }
-                    required
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="billingCity">City</Label>
-                    <Input
-                      id="billingCity"
-                      type="text"
-                      placeholder="Dallas"
-                      value={paymentData.billingCity}
-                      onChange={(e) =>
-                        handleInputChange("billingCity", e.target.value)
-                      }
-                      required
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="billingZip">ZIP Code</Label>
-                    <Input
-                      id="billingZip"
-                      type="text"
-                      placeholder="75201"
-                      value={paymentData.billingZip}
-                      onChange={(e) =>
-                        handleInputChange(
-                          "billingZip",
-                          e.target.value.replace(/\D/g, "")
-                        )
-                      }
-                      maxLength={5}
-                      required
+                  <Label htmlFor="payment">Card Details</Label>
+                  <div className="mt-2">
+                    <PaymentElement
+                      id="payment"
+                      options={{
+                        layout: "tabs",
+                        fields: {
+                          billingDetails: {
+                            name: "auto",
+                            email: "auto",
+                            phone: "auto",
+                            address: "auto", // Enable address collection
+                          },
+                        },
+                        terms: {
+                          card: "never", // Don't show terms for cards
+                        },
+                      }}
                     />
                   </div>
                 </div>
@@ -224,7 +147,7 @@ export default function Payment({
               <div className="bg-gray-50 p-4 rounded-lg">
                 <div className="flex items-center gap-2 text-sm text-gray-600">
                   <Lock className="w-4 h-4" />
-                  Your payment information is secure and encrypted
+                  Your payment information is secure and encrypted by Stripe
                 </div>
               </div>
 
@@ -241,7 +164,7 @@ export default function Payment({
                 </Button>
                 <Button
                   type="submit"
-                  disabled={isProcessing}
+                  disabled={isProcessing || !stripe || !elements}
                   className="flex-1 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600"
                 >
                   {isProcessing
@@ -406,5 +329,95 @@ export default function Payment({
         </Card>
       </div>
     </div>
+  );
+}
+
+// Main Payment Component with Stripe Provider
+export default function Payment(props: PaymentProps) {
+  const [clientSecret, setClientSecret] = useState<string>("");
+  const [paymentIntentError, setPaymentIntentError] = useState<string>("");
+  const total = props.bookingData.selectedVehicle?.price || 0;
+  const serviceFee = Math.round(total * 0.05); // 5% service fee
+  const grandTotal = total + serviceFee;
+
+  // Create payment intent when component mounts
+  React.useEffect(() => {
+    const createPaymentIntent = async () => {
+      try {
+        const response = await fetch('/api/create-payment-intent', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            amount: grandTotal,
+            currency: 'usd',
+            bookingData: props.bookingData,
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to create payment intent');
+        }
+
+        const data = await response.json();
+        
+        if (data.error) {
+          throw new Error(data.error);
+        }
+        
+        setClientSecret(data.clientSecret);
+      } catch (error) {
+        console.error('Error creating payment intent:', error);
+        setPaymentIntentError('Unable to initialize payment. Please refresh the page and try again.');
+      }
+    };
+
+    if (grandTotal > 0) {
+      createPaymentIntent();
+    }
+  }, [grandTotal, props.bookingData]);
+
+  // Show error if payment intent creation failed
+  if (paymentIntentError) {
+    return (
+      <div className="max-w-4xl mx-auto">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <div className="bg-red-50 border border-red-200 rounded-lg p-6 max-w-md">
+              <div className="flex items-center gap-2 text-red-700 mb-2">
+                <svg className="w-5 h-5" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                </svg>
+                <span className="font-medium">Payment Setup Error</span>
+              </div>
+              <p className="text-sm text-red-600 mb-4">{paymentIntentError}</p>
+              <Button onClick={() => window.location.reload()} className="w-full">
+                Retry
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!clientSecret) {
+    return (
+      <div className="max-w-4xl mx-auto">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-500 mx-auto"></div>
+            <p className="mt-4 text-gray-600">Setting up payment...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <StripeProvider clientSecret={clientSecret}>
+      <PaymentForm {...props} />
+    </StripeProvider>
   );
 }
