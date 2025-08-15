@@ -175,8 +175,10 @@ export default function VehicleSelection({
       onPricingStatus?.({ loading: true, hasAnyPricing: false });
 
       try {
-        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-        const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+        const { getCleanSupabaseUrl, getSupabaseAnonKey } = await import("@/lib/supabase-env");
+        const supabaseUrl = getCleanSupabaseUrl();
+        const supabaseKey = getSupabaseAnonKey();
+        
         if (!supabaseUrl || !supabaseKey) {
           setPricingError("Supabase environment variables are missing.");
           onPricingStatus?.({ loading: false, hasAnyPricing: false });

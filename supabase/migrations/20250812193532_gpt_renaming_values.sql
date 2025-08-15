@@ -1,25 +1,18 @@
 -- 1.1 Ensure core tables have needed columns
 
--- vehicles: add is_active if missing
-alter table if exists public.vehicles
+-- vehicle_types: add is_active if missing (note: it's vehicle_types, not vehicles)
+alter table if exists public.vehicle_types
   add column if not exists is_active boolean default true;
 
 -- pricing_grid: unify with service_type and support is_active
--- (If your table already matches, you can skip.)
-create table if not exists public.pricing_grid (
-  id bigserial primary key,
-  vehicle_id uuid not null references public.vehicles(vehicle_id) on delete cascade,
-  service_type text not null check (service_type in ('one-way','hourly')),
-  zone_type text null check (zone_type in ('dfw','dal')),
-  zone_number int null check (zone_number between 1 and 10),
-  rate numeric(12,2) not null,
-  min_hours int null,
-  is_active boolean not null default true,
-  created_at timestamp with time zone default now()
-);
+-- Since the table already exists, we just need to ensure it has the is_active column
+alter table if exists public.pricing_grid
+  add column if not exists is_active boolean default true;
+
+-- Update indexes to match existing schema (using 'zone' not 'zone_number')
 create index if not exists idx_pricing_grid_active on public.pricing_grid(is_active);
 create index if not exists idx_pricing_grid_vehicle on public.pricing_grid(vehicle_id);
-create index if not exists idx_pricing_grid_combo on public.pricing_grid(service_type, zone_type, zone_number);
+create index if not exists idx_pricing_grid_combo on public.pricing_grid(service_type, zone);
 
 -- zones table as you defined (ensure it exists with dfw_zone/dal_zone)
 create table if not exists public.zones (
@@ -58,33 +51,34 @@ insert into public.airports (code, display_name, primary_zip)
   on conflict (code) do nothing;
 
 -- 1.3 Consolidated view used by the edge function
-create or replace view public.pricing_with_vehicle_details as
+drop view if exists public.pricing_with_vehicle_details;
+
+create view public.pricing_with_vehicle_details as
 select
-  v.vehicle_id,
-  v.name as vehicle_name,
-  coalesce(v.description,'') as vehicle_description,
-  v.capacity,
-  coalesce(v.luggage,'') as luggage_description,
-  coalesce(v.special_notes,'') as special_notes,
+  vt.vehicle_id,
+  vt.name as vehicle_name,
+  coalesce(vt.description,'') as vehicle_description,
+  vt.capacity,
+  coalesce(vt.luggage_description,'') as luggage_description,
+  coalesce(vt.special_notes,'') as special_notes,
   pg.service_type,
-  pg.zone_type,
-  pg.zone_number as zone,
+  pg.zone,
   pg.rate,
   pg.min_hours,
-  least(pg.is_active::int, v.is_active::int)::boolean as is_active
+  least(pg.is_active::int, vt.is_active::int)::boolean as is_active
 from public.pricing_grid pg
-join public.vehicles v on v.vehicle_id = pg.vehicle_id;
+join public.vehicle_types vt on vt.vehicle_id = pg.vehicle_id;
 
 -- 1.4 (Optional) RLS policies (simplified; tighten as needed)
 -- Make readable to anon key (edge functions use service role or auth)
 alter table public.pricing_grid enable row level security;
-alter table public.vehicles enable row level security;
+alter table public.vehicle_types enable row level security;
 alter table public.zones enable row level security;
 alter table public.additional_fees enable row level security;
 
 create policy if not exists pricing_grid_read on public.pricing_grid
   for select using (true);
-create policy if not exists vehicles_read on public.vehicles
+create policy if not exists vehicle_types_read on public.vehicle_types
   for select using (true);
 create policy if not exists zones_read on public.zones
   for select using (true);

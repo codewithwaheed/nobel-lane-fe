@@ -1,21 +1,12 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import { getCleanSupabaseUrl, getSupabaseAnonKey } from "@/lib/supabase-env";
 
 export async function createClient() {
   const cookieStore = await cookies();
 
-  let supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-
-  // Clean up any potential malformed URLs
-  if (supabaseUrl.startsWith("=")) {
-    supabaseUrl = supabaseUrl.slice(1);
-  }
-
-  // Ensure URL is valid
-  if (!supabaseUrl || !supabaseUrl.startsWith("http")) {
-    throw new Error(`Invalid Supabase URL: ${supabaseUrl}`);
-  }
+  const supabaseUrl = getCleanSupabaseUrl();
+  const supabaseAnonKey = getSupabaseAnonKey();
 
   return createServerClient(
     supabaseUrl,
