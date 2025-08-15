@@ -147,7 +147,7 @@ export const vehicleFleet: VehicleOption[] = [
     price: 110, // Fallback price - will be replaced by backend pricing
     description:
       "Executive-level sedan service with priority service and executive amenities.",
-    vehicleId: "sedan", // Backend vehicle ID
+    vehicleId: "executive_sedan", // Backend vehicle ID
   },
   {
     id: 2,
@@ -158,7 +158,7 @@ export const vehicleFleet: VehicleOption[] = [
     price: 129, // Fallback price - will be replaced by backend pricing
     description:
       "Professional executive transport with business amenities and phone chargers.",
-    vehicleId: "suv", // Backend vehicle ID
+    vehicleId: "executive_suv", // Backend vehicle ID
   },
   {
     id: 3,

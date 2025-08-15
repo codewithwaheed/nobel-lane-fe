@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import WizardProgress from "./WizardProgress";
 import TripDetails from "./TripDetails";
@@ -16,7 +16,7 @@ import {
 import type { BookingFormData, VehicleOption } from "@/lib/booking-storage";
 import { createClient } from "@/utils/supabase/client";
 import type { User } from "@supabase/supabase-js";
-import { LoginForm } from "@/app/login/page";
+import { LoginForm } from "./LoginForm";
 
 interface BookingWizardProps {
   isQuote: boolean;
@@ -38,10 +38,7 @@ const quoteSteps = [
   { id: 4, name: "Confirmation", description: "Request sent!" },
 ];
 
-export default function BookingWizard({
-  isQuote,
-  onClose,
-}: BookingWizardProps) {
+export default function BookingWizard({ onClose }: BookingWizardProps) {
   const [bookingData, setBookingData] = useState<BookingFormData>(() => {
     const saved = getBookingData();
     return (
@@ -53,7 +50,7 @@ export default function BookingWizard({
         time: "",
         submittedAt: "",
         passengers: 1,
-        isQuote: isQuote,
+        isQuote: false, // Default to normal booking flow, not quote
         currentStep: 1,
         completedSteps: [],
       }
@@ -61,12 +58,20 @@ export default function BookingWizard({
   });
 
   const [user, setUser] = useState<User | null>(null);
+  const [currentStep, setCurrentStep] = useState(() => {
+    const saved = getBookingData();
+    if (saved && saved.from && saved.date && saved.time) return 2; // jump to Service if details exist
+    return 1;
+  });
+
+  // Pricing status bubbled up from VehicleSelection
+  const [pricingLoading, setPricingLoading] = useState(false);
+  const [hasAnyPricing, setHasAnyPricing] = useState(false);
+  const [forceQuoteFlow, setForceQuoteFlow] = useState(false);
 
   useEffect(() => {
     const supabase = createClient();
-    // Initial fetch
     supabase.auth.getUser().then(({ data }) => setUser(data.user ?? null));
-    // Subscribe to auth changes
     const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
     });
@@ -75,34 +80,7 @@ export default function BookingWizard({
     };
   }, []);
 
-  // Determine starting step based on existing data
-  const [currentStep, setCurrentStep] = useState(() => {
-    const saved = getBookingData();
-    if (saved && saved.from && saved.date && saved.time) {
-      // If we have trip details, start from vehicle selection
-      return 2;
-    }
-    return 1; // Otherwise start from trip details
-  });
-
-  // Build steps dynamically: insert Sign In before Payment when not logged in (booking flow only)
-  const derivedSteps = isQuote
-    ? quoteSteps
-    : user
-    ? steps
-    : [
-        { id: 1, name: "Trip Details", description: "Where and when" },
-        { id: 2, name: "Service", description: "Choose your ride" },
-        { id: 3, name: "Pickup Info", description: "Additional information" },
-        { id: 4, name: "Sign In", description: "Access your account" },
-        { id: 5, name: "Payment", description: "Secure checkout" },
-        { id: 6, name: "Confirmation", description: "All set!" },
-      ];
-
-  const maxStep = derivedSteps.length;
-  const currentStepName = derivedSteps[currentStep - 1]?.name;
-
-  // Save data whenever it changes
+  // Persist booking data
   useEffect(() => {
     updateBookingData(bookingData);
   }, [bookingData]);
@@ -111,50 +89,124 @@ export default function BookingWizard({
     setBookingData((prev) => ({ ...prev, ...updates }));
   };
 
-  const handleNext = () => {
-    if (currentStep < maxStep) {
-      setCurrentStep(currentStep + 1);
+  const derivedSteps = (() => {
+    // Use quote flow only when explicitly set (not based on pricing availability)
+    const isQuoteFlow = bookingData.isQuote || forceQuoteFlow;
+
+    if (isQuoteFlow) {
+      return quoteSteps;
     }
+
+    // Normal booking flow - add Sign In step if user not logged in
+    if (!user) {
+      return [
+        { id: 1, name: "Trip Details", description: "Where and when" },
+        { id: 2, name: "Service", description: "Choose your ride" },
+        { id: 3, name: "Pickup Info", description: "Additional information" },
+        { id: 4, name: "Sign In", description: "Access your account" },
+        { id: 5, name: "Payment", description: "Secure checkout" },
+        { id: 6, name: "Confirmation", description: "All set!" },
+      ];
+    }
+    return steps;
+  })();
+
+  const maxStep = derivedSteps.length;
+  const currentStepName = derivedSteps[currentStep - 1]?.name;
+
+  // When pricing status changes, update the flow accordingly
+  useEffect(() => {
+    if (currentStepName === "Service") {
+      if (hasAnyPricing && !pricingLoading) {
+        // Pricing is available - ensure we're in booking flow
+        if (forceQuoteFlow) {
+          setForceQuoteFlow(false);
+          updateBookingDataState({ isQuote: false });
+        }
+      } else if (!pricingLoading && !hasAnyPricing) {
+        // No pricing available - switch to quote flow
+        if (!bookingData.isQuote && !forceQuoteFlow) {
+          setForceQuoteFlow(true);
+          updateBookingDataState({ isQuote: true });
+        }
+      }
+    }
+  }, [
+    currentStepName,
+    hasAnyPricing,
+    pricingLoading,
+    bookingData.isQuote,
+    forceQuoteFlow,
+  ]);
+
+  const handleNext = () => {
+    // Special handling for Service step
+    if (currentStepName === "Service") {
+      // Block while pricing is loading to avoid false negatives
+      if (pricingLoading) return;
+
+      const selectedVehicle = bookingData.selectedVehicle as VehicleOption & {
+        hasPricing?: boolean;
+        pricingData?: { total: number };
+      };
+
+      // If we're in quote flow, just proceed to next step
+      if (bookingData.isQuote || forceQuoteFlow) {
+        if (currentStep < maxStep) setCurrentStep(currentStep + 1);
+        return;
+      }
+
+      // In booking flow, check if selected vehicle has pricing
+      const hasPricing =
+        selectedVehicle?.hasPricing && !!selectedVehicle?.pricingData;
+
+      if (!hasPricing && !hasAnyPricing) {
+        // No pricing available anywhere - should already be in quote flow
+        // This shouldn't happen due to useEffect, but handle it anyway
+        setForceQuoteFlow(true);
+        updateBookingDataState({ isQuote: true });
+        return;
+      }
+    }
+
+    if (currentStep < maxStep) setCurrentStep(currentStep + 1);
   };
 
   const handleBack = () => {
-    if (currentStep > 1) {
-      setCurrentStep(currentStep - 1);
-    }
+    if (currentStep > 1) setCurrentStep(currentStep - 1);
   };
 
   const handleTripDetailsSubmit = (data: Partial<BookingFormData>) => {
     updateBookingDataState(data);
-    handleNext();
+    setCurrentStep(2);
   };
 
   const handleVehicleSelect = (vehicle: VehicleOption) => {
     updateBookingDataState({ selectedVehicle: vehicle });
-    // Don't automatically go to next step - let user use action buttons
   };
 
   const handleAdditionalInfoSubmit = (data: Partial<BookingFormData>) => {
     updateBookingDataState(data);
-    if (isQuote) {
-      // For quotes, skip payment and go straight to confirmation
-      setCurrentStep(4);
+    if (bookingData.isQuote || forceQuoteFlow) {
+      setCurrentStep(4); // Confirmation for quote flow
     } else {
       handleNext();
     }
   };
 
-  const handlePaymentComplete = () => {
-    handleNext();
-  };
+  const handlePaymentComplete = () => setCurrentStep(currentStep + 1);
 
   const handleStartNew = () => {
     clearBookingData();
     setCurrentStep(1);
+    // Reset quote flow flags to default (normal booking flow)
+    setForceQuoteFlow(false);
+    setHasAnyPricing(false);
+    setPricingLoading(false);
+
     const fresh = getBookingData();
-    if (fresh) {
-      setBookingData(fresh);
-    } else {
-      setBookingData({
+    setBookingData(
+      fresh || {
         type: "one-way",
         from: "",
         to: "",
@@ -162,11 +214,11 @@ export default function BookingWizard({
         time: "",
         submittedAt: "",
         passengers: 1,
-        isQuote: isQuote,
+        isQuote: false, // Default to normal booking flow
         currentStep: 1,
         completedSteps: [],
-      });
-    }
+      }
+    );
   };
 
   const canProceed = () => {
@@ -178,12 +230,11 @@ export default function BookingWizard({
       case "Contact":
         return !!(bookingData.phone || bookingData.email);
       case "Pickup Info":
-        return true; // Booking flow doesn't require additional info
+        return true;
       case "Sign In":
-        return false; // Controlled by LoginForm submit
-      case "Payment":
+        return false; // controlled by LoginForm
       default:
-        return true; // Payment validation handled in component
+        return true;
     }
   };
 
@@ -208,19 +259,18 @@ export default function BookingWizard({
           <VehicleSelection
             selectedVehicle={bookingData.selectedVehicle}
             onVehicleSelect={handleVehicleSelect}
-            showPricing={!isQuote}
+            showPricing={true} // Always show pricing UI, but VehicleSelection will handle display logic
+            isQuoteFlow={bookingData.isQuote || forceQuoteFlow}
             onNext={handleNext}
             onPrevious={handleBack}
             canGoNext={!!bookingData.selectedVehicle}
             canGoPrevious={currentStep > 1}
+            onPricingStatus={(s) => {
+              setPricingLoading(s.loading);
+              setHasAnyPricing(s.hasAnyPricing);
+            }}
             tripData={{
               type: bookingData.type,
-              fromPlaceId: bookingData.fromPlaceId,
-              toPlaceId: bookingData.toPlaceId,
-              fromLat: bookingData.fromLat,
-              fromLng: bookingData.fromLng,
-              toLat: bookingData.toLat,
-              toLng: bookingData.toLng,
               fromZipcode: bookingData.fromZipcode,
               toZipcode: bookingData.toZipcode,
               duration: bookingData.duration,
@@ -228,29 +278,29 @@ export default function BookingWizard({
           />
         );
       case "Pickup Info":
+      case "Contact":
         return (
           <AdditionalInfo
-            isQuote={isQuote}
+            isQuote={bookingData.isQuote || forceQuoteFlow}
             bookingData={bookingData}
             onSubmit={handleAdditionalInfoSubmit}
             onBack={handleBack}
           />
         );
       case "Sign In":
+        // Never shown in quote flow
+        if (bookingData.isQuote || forceQuoteFlow) return null;
         return (
           <div className="max-w-md mx-auto">
             <LoginForm
               showTitle={false}
               className="mt-0 md:mt-0 lg:mt-0"
-              onSuccess={(u) => {
-                // Update local user state; step will auto-advance via effect
-                setUser(u as User);
-              }}
+              onSuccess={(u) => setUser(u as User)}
             />
           </div>
         );
       case "Payment":
-        if (isQuote) {
+        if (bookingData.isQuote || forceQuoteFlow) {
           return (
             <Confirmation
               isQuote={true}
@@ -269,7 +319,7 @@ export default function BookingWizard({
       case "Confirmation":
         return (
           <Confirmation
-            isQuote={!!isQuote}
+            isQuote={bookingData.isQuote || forceQuoteFlow}
             bookingData={bookingData}
             onStartNew={handleStartNew}
           />
@@ -281,15 +331,17 @@ export default function BookingWizard({
 
   return (
     <div className="min-h-screen bg-gray-50 pb-16 sm:pb-20">
-      {/* Merged Header + Progress */}
       <WizardProgress
         steps={derivedSteps}
         currentStep={currentStep}
-        title={isQuote ? "Request Quote" : "Book Your Trip"}
+        title={
+          bookingData.isQuote || forceQuoteFlow
+            ? "Request Quote"
+            : "Book Your Trip"
+        }
         onBack={onClose}
       />
 
-      {/* Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 mb-8 sm:mb-12">
         {renderStepContent()}
       </div>
@@ -305,7 +357,6 @@ export default function BookingWizard({
               >
                 Back
               </Button>
-
               <Button
                 onClick={handleNext}
                 disabled={!canProceed()}

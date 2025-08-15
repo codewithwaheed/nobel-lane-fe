@@ -108,8 +108,9 @@ export default function VehicleSelection({
     };
   }, [tripData]);
 
-  // Deduplicated fetch to prevent repeated calls
+  // Deduplicated fetch with AbortController to prevent repeated calls
   const lastPayloadRef = useRef<string | null>(null);
+  const abortRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
     // use primitive deps to avoid object identity reruns
@@ -126,7 +127,6 @@ export default function VehicleSelection({
 
     const fetchPricing = async () => {
       setPricingError(null);
-      let hasSetError = false;
 
       const payload: {
         service_type: "one-way" | "hourly";
@@ -170,6 +170,11 @@ export default function VehicleSelection({
       // skip identical payload
       if (lastPayloadRef.current === payloadStr) return;
 
+      // cancel previous
+      if (abortRef.current) abortRef.current.abort();
+      const controller = new AbortController();
+      abortRef.current = controller;
+
       lastPayloadRef.current = payloadStr;
       setPricingLoading(true);
       onPricingStatus?.({ loading: true, hasAnyPricing: false });
@@ -193,55 +198,12 @@ export default function VehicleSelection({
             "x-debug-pricing": "1",
           },
           body: payloadStr,
+          signal: controller.signal,
         });
 
         if (!res.ok) {
-          let errorData;
-          try {
-            errorData = await res.json();
-          } catch {
-            const errText = await res.text();
-            throw new Error(`HTTP ${res.status}: ${errText}`);
-          }
-
-          // Handle specific error codes
-          if (errorData.error_code === "UNKNOWN_ZIP") {
-            setPricing(null); // Clear any previous pricing data
-            setPricingError(
-              "This area is not currently in our service zones. Please contact us for pricing information."
-            );
-            onPricingStatus?.({ loading: false, hasAnyPricing: false });
-            hasSetError = true;
-            return;
-          }
-
-          if (errorData.error_code === "NO_PRICING") {
-            setPricing(null); // Clear any previous pricing data
-            setPricingError(
-              "No pricing available for this route. Please contact us for a custom quote."
-            );
-            onPricingStatus?.({ loading: false, hasAnyPricing: false });
-            hasSetError = true;
-            return;
-          }
-
-          if (
-            errorData.error_code === "MISSING_FIELDS" ||
-            errorData.error_code === "MISSING_DROPOFF_ZIP"
-          ) {
-            setPricing(null); // Clear any previous pricing data
-            setPricingError(
-              "Please ensure both pickup and destination are selected."
-            );
-            onPricingStatus?.({ loading: false, hasAnyPricing: false });
-            hasSetError = true;
-            return;
-          }
-
-          throw new Error(
-            errorData.error ||
-              `HTTP ${res.status}: ${errorData.error_code || "Unknown error"}`
-          );
+          const errText = await res.text();
+          throw new Error(`HTTP ${res.status}: ${errText}`);
         }
 
         const data = (await res.json()) as PricingResponse;
@@ -251,22 +213,23 @@ export default function VehicleSelection({
         onPricingStatus?.({ loading: false, hasAnyPricing });
       } catch (e: unknown) {
         const err = e as { name?: string; message?: string };
+        if (err?.name === "AbortError") return; // cancelled
         console.error("Error fetching pricing:", err?.message ?? e);
-
-        // Only set error if it wasn't already handled (like UNKNOWN_ZIP)
-        if (!hasSetError) {
-          setPricing(null); // Clear any previous pricing data
-          setPricingError(
-            "Unable to retrieve pricing at this time. Please contact us for pricing information."
-          );
-        }
+        setPricingError(
+          "This area is not currently in our service zones. Please contact us for pricing information."
+        );
         onPricingStatus?.({ loading: false, hasAnyPricing: false });
       } finally {
         setPricingLoading(false);
+        abortRef.current = null;
       }
     };
 
     fetchPricing();
+
+    return () => {
+      if (abortRef.current) abortRef.current.abort();
+    };
   }, [
     stableTripData?.fromZipcode,
     stableTripData?.toZipcode,
@@ -498,13 +461,16 @@ export default function VehicleSelection({
                     </div>
                   </div>
 
-                  {/* Contact for pricing if no price, not during loading */}
-                  {showPricing && !pricingLoading && (!v.hasPricing || !p) && (
-                    <div className="mt-3 text-xs text-amber-600 font-medium flex items-center justify-center gap-1">
-                      <Phone className="w-3 h-3" />
-                      Contact for pricing
-                    </div>
-                  )}
+                  {/* Contact for pricing if no price, not during loading, and not in quote flow */}
+                  {showPricing &&
+                    !pricingLoading &&
+                    !isQuoteFlow &&
+                    (!v.hasPricing || !p) && (
+                      <div className="mt-3 text-xs text-amber-600 font-medium flex items-center justify-center gap-1">
+                        <Phone className="w-3 h-3" />
+                        Contact for pricing
+                      </div>
+                    )}
 
                   {/* Description */}
                   <div className="text-xs text-gray-600 leading-relaxed px-1">

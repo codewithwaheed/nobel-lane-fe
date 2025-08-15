@@ -9,10 +9,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "fx:place-details": "supabase functions serve place-details --env-file .env.local --no-verify-jwt",
-    "fx:places-autocomplete": "supabase functions serve places-autocomplete --env-file .env.local --no-verify-jwt",
     "fx:get-pricing": "supabase functions serve get-pricing --env-file .env.local --no-verify-jwt",
-    "fx:all": "npm-run-all --parallel fx:place-details fx:places-autocomplete fx:get-pricing"
+    "fx:all": "npm-run-all --parallel  fx:get-pricing"
   },
   "dependencies": {
     "@headlessui/react": "^2.2.6",

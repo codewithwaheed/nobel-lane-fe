@@ -1,6 +1,4 @@
-"use client";
-
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -14,8 +12,9 @@ import {
   Users,
   Car,
   Info,
+  DollarSign,
 } from "lucide-react";
-import { BookingFormData, VehicleOption } from "@/lib/booking-storage";
+import { BookingFormData } from "@/lib/booking-storage";
 import {
   calculatePricingBreakdown,
   calculatePricingExtras,
@@ -45,41 +44,43 @@ export default function Payment({
     billingZip: "",
   });
 
-  const handleInputChange = (field: string, value: string) => {
+  const handleInputChange = (field: string, value: string) =>
     setPaymentData((prev) => ({ ...prev, [field]: value }));
-  };
-
-  const formatCardNumber = (value: string) => {
-    // Remove all non-digits
-    const numbers = value.replace(/\D/g, "");
-    // Add spaces every 4 digits
-    return numbers.replace(/(\d{4})(?=\d)/g, "$1 ");
-  };
-
+  const formatCardNumber = (value: string) =>
+    value.replace(/\D/g, "").replace(/(\d{4})(?=\d)/g, (m) => m + " ");
   const formatExpiryDate = (value: string) => {
-    // Remove all non-digits
     const numbers = value.replace(/\D/g, "");
-    // Add slash after 2 digits
-    if (numbers.length >= 2) {
-      return numbers.substring(0, 2) + "/" + numbers.substring(2, 4);
-    }
-    return numbers;
+    return numbers.length >= 2
+      ? numbers.substring(0, 2) + "/" + numbers.substring(2, 4)
+      : numbers;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsProcessing(true);
-
-    // Simulate payment processing
-    setTimeout(() => {
-      onPaymentComplete();
-    }, 2000);
+    setTimeout(() => onPaymentComplete(), 2000);
   };
 
-  // Calculate detailed pricing breakdown
-  const pricingBreakdown = calculatePricingBreakdown(bookingData);
+  // ---- Compose pricing from base + extras ----
+  const base = calculatePricingBreakdown(bookingData);
   const extras = calculatePricingExtras(bookingData);
-  const recommendations = getSmartRecommendations(bookingData);
+
+  const extraStopsCount = Number(bookingData?.extraStopsCount ?? 0);
+  const tolls = Number(extras.dfwToll || 0);
+  const extrasOnly =
+    Number(extras.extraStops || 0) +
+    Number(extras.internationalArrival || 0) +
+    Number(extras.earlyLatePickup || 0) +
+    Number(extras.holiday || 0);
+
+  const subtotal = Number((base.baseRate + tolls + extrasOnly).toFixed(2));
+  const gratuityRate = Number((subtotal * 0.2).toFixed(2));
+  const totalPrice = Number((subtotal + gratuityRate).toFixed(2));
+
+  const recommendations = useMemo(
+    () => getSmartRecommendations(bookingData, bookingData?.selectedVehicle),
+    [bookingData]
+  );
 
   return (
     <div className="max-w-4xl mx-auto">
@@ -88,13 +89,11 @@ export default function Payment({
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <CreditCard className="w-5 h-5" />
-              Payment Information
+              <CreditCard className="w-5 h-5" /> Payment Information
             </CardTitle>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Card Details */}
               <div className="space-y-4">
                 <div>
                   <Label htmlFor="cardNumber">Card Number</Label>
@@ -113,7 +112,6 @@ export default function Payment({
                     required
                   />
                 </div>
-
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="expiryDate">Expiry Date</Label>
@@ -150,7 +148,6 @@ export default function Payment({
                     />
                   </div>
                 </div>
-
                 <div>
                   <Label htmlFor="cardholderName">Cardholder Name</Label>
                   <Input
@@ -165,13 +162,9 @@ export default function Payment({
                   />
                 </div>
               </div>
-
               <Separator />
-
-              {/* Billing Address */}
               <div className="space-y-4">
                 <h4 className="font-medium">Billing Address</h4>
-
                 <div>
                   <Label htmlFor="billingAddress">Address</Label>
                   <Input
@@ -185,7 +178,6 @@ export default function Payment({
                     required
                   />
                 </div>
-
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="billingCity">City</Label>
@@ -219,16 +211,12 @@ export default function Payment({
                   </div>
                 </div>
               </div>
-
-              {/* Security Notice */}
               <div className="bg-gray-50 p-4 rounded-lg">
                 <div className="flex items-center gap-2 text-sm text-gray-600">
-                  <Lock className="w-4 h-4" />
-                  Your payment information is secure and encrypted
+                  <Lock className="w-4 h-4" /> Your payment information is
+                  secure and encrypted
                 </div>
               </div>
-
-              {/* Action Buttons */}
               <div className="flex gap-4">
                 <Button
                   type="button"
@@ -246,9 +234,7 @@ export default function Payment({
                 >
                   {isProcessing
                     ? "Processing..."
-                    : `Complete Payment ${formatPrice(
-                        pricingBreakdown.totalPrice
-                      )}`}
+                    : `Complete Payment ${formatPrice(totalPrice)}`}
                 </Button>
               </div>
             </form>
@@ -261,7 +247,6 @@ export default function Payment({
             <CardTitle>Booking Summary</CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
-            {/* Trip Details */}
             <div className="space-y-4">
               <div className="flex items-start gap-3">
                 <MapPin className="w-5 h-5 text-amber-500 mt-0.5" />
@@ -278,7 +263,6 @@ export default function Payment({
                   </div>
                 </div>
               </div>
-
               <div className="flex items-start gap-3">
                 <Calendar className="w-5 h-5 text-amber-500 mt-0.5" />
                 <div>
@@ -289,7 +273,6 @@ export default function Payment({
                   </div>
                 </div>
               </div>
-
               <div className="flex items-start gap-3">
                 <Users className="w-5 h-5 text-amber-500 mt-0.5" />
                 <div>
@@ -299,7 +282,6 @@ export default function Payment({
                   </div>
                 </div>
               </div>
-
               {bookingData.selectedVehicle && (
                 <div className="flex items-start gap-3">
                   <Car className="w-5 h-5 text-amber-500 mt-0.5" />
@@ -315,20 +297,18 @@ export default function Payment({
 
             <Separator />
 
-            {/* Smart Recommendations */}
             {recommendations.length > 0 && (
               <div className="space-y-2">
                 <h4 className="font-medium flex items-center gap-2">
-                  <Info className="w-4 h-4 text-blue-500" />
-                  Trip Details
+                  <Info className="w-4 h-4 text-blue-500" /> Trip Details
                 </h4>
                 <div className="space-y-1">
-                  {recommendations.slice(0, 2).map((recommendation, index) => (
+                  {recommendations.slice(0, 2).map((rec, i) => (
                     <div
-                      key={index}
+                      key={i}
                       className="text-xs text-gray-600 bg-blue-50 p-2 rounded"
                     >
-                      {recommendation}
+                      {rec}
                     </div>
                   ))}
                 </div>
@@ -337,68 +317,64 @@ export default function Payment({
 
             <Separator />
 
-            {/* Concise Pricing Breakdown */}
             <div className="space-y-3">
-              <h4 className="font-medium">Price Breakdown</h4>
+              <h4 className="font-medium flex items-center gap-2">
+                <DollarSign className="w-4 h-4 text-green-600" /> Price
+                Breakdown
+              </h4>
 
               <div className="space-y-2 text-sm">
-                {/* Base Rate */}
                 <div className="flex justify-between">
                   <span className="text-gray-600">Base fare</span>
                   <span className="font-medium">
-                    {formatPrice(pricingBreakdown.baseRate)}
+                    {formatPrice(base.baseRate)}
                   </span>
                 </div>
 
-                {/* Gratuity */}
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Gratuity (20%)</span>
-                  <span className="font-medium">
-                    {formatPrice(pricingBreakdown.gratuityRate)}
-                  </span>
-                </div>
-
-                {/* Additional Services - Condensed */}
-                {pricingBreakdown.extrasRate > 0 && (
+                {extrasOnly > 0 && (
                   <div className="flex justify-between">
                     <div>
                       <span className="text-gray-600">Additional services</span>
                       <div className="text-xs text-gray-500">
                         {[
-                          extras.flightTracking > 0 && "Flight tracking",
                           extras.internationalArrival > 0 &&
                             "International arrival",
                           extras.earlyLatePickup > 0 && "Early/late pickup",
+                          extras.holiday > 0 && "Holiday surcharge",
                           extras.extraStops > 0 &&
-                            `${pricingBreakdown.breakdown.extraStopsCount} extra stops`,
-                          extras.dfwToll > 0 && "DFW toll",
+                            `${extraStopsCount} extra stop${
+                              extraStopsCount === 1 ? "" : "s"
+                            }`,
                         ]
                           .filter(Boolean)
                           .join(", ")}
                       </div>
                     </div>
                     <span className="font-medium">
-                      {formatPrice(pricingBreakdown.extrasRate)}
+                      {formatPrice(extrasOnly)}
                     </span>
                   </div>
                 )}
 
-                {/* Estimated Tolls */}
-                {pricingBreakdown.tollsRate > 0 && (
+                {tolls > 0 && (
                   <div className="flex justify-between">
                     <span className="text-gray-600">Estimated tolls</span>
-                    <span className="font-medium">
-                      {formatPrice(pricingBreakdown.tollsRate)}
-                    </span>
+                    <span className="font-medium">{formatPrice(tolls)}</span>
                   </div>
                 )}
+
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Gratuity (20%)</span>
+                  <span className="font-medium">
+                    {formatPrice(gratuityRate)}
+                  </span>
+                </div>
 
                 <Separator />
 
-                {/* Total */}
                 <div className="flex justify-between font-semibold text-lg">
                   <span>Total</span>
-                  <span>{formatPrice(pricingBreakdown.totalPrice)}</span>
+                  <span>{formatPrice(totalPrice)}</span>
                 </div>
               </div>
             </div>

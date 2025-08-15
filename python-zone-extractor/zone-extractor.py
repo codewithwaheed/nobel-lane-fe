@@ -1,31 +1,52 @@
 import pandas as pd
 
-# 1) Load your Excel file
-xlsx_path = "Noble Lane Zip to Zone Guide.xlsx"
-df = pd.read_excel(xlsx_path, sheet_name=0, header=None)
+xlsx_path = "zones-cleaned.xlsx"
 
-# 2) The sheet is laid out as [ZIP, ..., zone] on the same row.
-#    Find the “zone” column by scanning each row for the first valid zone (1–5).
-records = []
-for _, row in df.iterrows():
-    zip_code = str(row[0]).strip()
-    if not zip_code.isdigit():
-        continue  # skip headers or blank rows
+# Load file (header in first row assumed)
+df = pd.read_excel(xlsx_path)
 
-    # scan the rest of the columns for a numeric zone
-    for c in row[1:]:
-        if pd.notna(c) and isinstance(c, (int, float)):
-            zone = int(c)
-            if zone in {1, 2, 3, 4, 5}:
-                records.append({"zip_code": zip_code, "zone": zone})
-                break
-    else:
-        raise ValueError(f"No zone found for ZIP {zip_code}")
+# Normalize column names just in case
+df.columns = [c.strip().lower() for c in df.columns]
 
+# Helper: convert hourly to 0, NaN stays NaN
+def parse_zone(val):
+    if pd.isna(val):
+        return None
+    if isinstance(val, str) and val.strip().lower() == "hourly":
+        return 0
+    try:
+        return int(val)
+    except (ValueError, TypeError):
+        return None
 
-# 3) Build DataFrame and sort
-out_df = pd.DataFrame(records).drop_duplicates().sort_values(by=["zone","zip_code"])
+# Helper: format ZIP codes properly (remove .0 and handle NaN)
+def format_zip_code(val):
+    if pd.isna(val):
+        return None
+    try:
+        # Convert to int first to remove decimal, then to string
+        return str(int(val))
+    except (ValueError, TypeError):
+        return str(val).strip() if val else None
 
-# 4) Write to CSV
+# Apply transformations
+df["dfw"] = df["dfw"].apply(parse_zone)
+df["dal"] = df["dal"].apply(parse_zone)
+
+# Rename columns to match expected output format
+df = df.rename(columns={
+    "zip": "zip_code",
+    "dfw": "dfw_zone", 
+    "dal": "dal_zone"
+})
+
+# Format ZIP codes to remove .0 decimal places
+df["zip_code"] = df["zip_code"].apply(format_zip_code)
+
+# Keep only the columns we want, remove duplicates
+out_df = df[["zip_code", "city", "dfw_zone", "dal_zone"]].drop_duplicates()
+
+# Save to CSV
 out_df.to_csv("zones.csv", index=False)
-print("✅ Written zones.csv with", len(out_df), "rows.")
+
+print(f"✅ Written zones.csv with {len(out_df)} rows.")
