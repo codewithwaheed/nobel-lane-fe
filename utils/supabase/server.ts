@@ -4,9 +4,22 @@ import { cookies } from "next/headers";
 export async function createClient() {
   const cookieStore = await cookies();
 
+  let supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+
+  // Clean up any potential malformed URLs
+  if (supabaseUrl.startsWith("=")) {
+    supabaseUrl = supabaseUrl.slice(1);
+  }
+
+  // Ensure URL is valid
+  if (!supabaseUrl || !supabaseUrl.startsWith("http")) {
+    throw new Error(`Invalid Supabase URL: ${supabaseUrl}`);
+  }
+
   return createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    supabaseUrl,
+    supabaseAnonKey,
     {
       cookies: {
         getAll() {
@@ -24,6 +37,6 @@ export async function createClient() {
           }
         },
       },
-    }
+    },
   );
 }
