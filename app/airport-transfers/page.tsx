@@ -52,7 +52,7 @@ const serviceSpotlight = [
 Our experienced drivers monitor your flight status in real-time and adjust pickup times automatically for delays or early arrivals. No more worrying about missed connections or waiting for transportation.
 
 Every transfer includes complimentary flight monitoring, professional meet-and-greet service, and assistance with luggage. Our luxury vehicles provide comfort and reliability for business travelers and leisure guests alike.`,
-    img: "/business-car.jpeg",
+    img: "/images/Dallas_Fort_Worth_Sign_F.webp",
   },
   {
     title: "Flight Monitoring & Coordination",
@@ -61,7 +61,7 @@ Every transfer includes complimentary flight monitoring, professional meet-and-g
 Our operations center tracks your flight status from departure to arrival, automatically adjusting pickup times and notifying your chauffeur of any changes.
 
 Whether you're arriving for business or pleasure, our professional service ensures seamless ground transportation with flexible pickup options and transparent pricing structure.`,
-    img: "/contact-us.jpeg",
+    img: "/images/Chauffeur_Opening_Car_Door_Sunset_F-1-1.webp",
   },
 ];
 
@@ -120,7 +120,7 @@ export default function AirportTransfersPage() {
     <main className="bg-white dark:bg-gray-950 text-gray-900 dark:text-white font-sans">
       {/* Hero + Booking Form */}
       <ServicesHero
-        heroImage="/hero-cover.jpeg"
+        heroImage="/images/noble-lane-executive-airport-transportF.webp"
         title="Airport Transfers"
         description="Professional airport transfer service to DFW International and Dallas Love Field. Complimentary flight monitoring, flexible pickup locations, and transparent pricing with no surge fees."
       >

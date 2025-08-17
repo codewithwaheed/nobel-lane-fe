@@ -53,7 +53,7 @@ const serviceSpotlight = [
 From intimate executive groups to large corporate conferences, we provide the right vehicle for every occasion. Our fleet includes luxury sedans, Sprinter vans, mini buses, and full-size coach buses to accommodate any group size.
 
 Our experienced logistics team coordinates multiple vehicles, manages complex itineraries, and ensures all passengers arrive on time and together. Perfect for corporate events, conferences, and special occasions.`,
-    img: "/business-car.jpeg",
+    img: "/images/Noble_Lane_Fleet_F.webp",
   },
   {
     title: "Corporate Events & Speaker Transportation",
@@ -62,7 +62,7 @@ Our experienced logistics team coordinates multiple vehicles, manages complex it
 We understand the unique requirements of corporate gatherings and professional events, providing reliable transportation that reflects your organization's professionalism.
 
 Our services include speaker transportation, attendee shuttles, multi-venue coordination, and flexible scheduling to accommodate last-minute changes or extended event schedules.`,
-    img: "/contact-us.jpeg",
+    img: "/images/Chauffeur_Opening_Car_Door_Sunset_F-1-1.webp",
   },
 ];
 
@@ -121,7 +121,7 @@ export default function GroupTransportationPage() {
     <main className="bg-white dark:bg-gray-950 text-gray-900 dark:text-white font-sans">
       {/* Hero + Booking Form */}
       <ServicesHero
-        heroImage="/hero-cover.jpeg"
+        heroImage="/images/Noble_Lane_Fleet_F.webp"
         title="Group Transportation"
         description="Professional group transportation solutions from individual transfers to large corporate events. Sprinter vans, mini buses, and coach buses with multi-vehicle coordination and meet-and-greet service."
       >

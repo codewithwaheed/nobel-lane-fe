@@ -15,7 +15,7 @@ export default function ContactPage() {
       {/* Hero Section */}
       <section className="relative h-[20vh] md:h-[40vh] flex items-end md:items-center text-white">
         <Image
-          src="/contact-us.jpeg"
+          src="/images/Chauffeur_Opening_Car_Door_Sunset_F-1-1.webp"
           alt="Contact Noble Lane"
           fill
           className="object-cover"

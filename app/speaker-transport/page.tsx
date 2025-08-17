@@ -53,7 +53,7 @@ const serviceSpotlight = [
 Our experienced chauffeurs are familiar with conference schedules, venue protocols, and the importance of punctuality for professional speakers. We ensure your speakers arrive refreshed and on time for their presentations.
 
 From corporate conferences to industry symposiums, we handle transportation logistics so your speakers can focus on delivering impactful presentations and sharing their expertise.`,
-    img: "/speaker-transport.jpg",
+    img: "/images/Speaker_Transport_Noble_Lane.webp",
   },
   {
     title: "Event & Venue Coordination",
@@ -62,7 +62,7 @@ From corporate conferences to industry symposiums, we handle transportation logi
 We understand the unique requirements of professional speakers, including the need for confidentiality, flexibility for last-minute schedule changes, and coordination with complex event schedules.
 
 Our service extends to corporate events, industry conferences, trade shows, and professional speaking engagements throughout the Dallas-Fort Worth area. Medical speakers and healthcare professionals are also welcome.`,
-    img: "/contact-us.jpeg",
+    img: "/images/Chauffeur_Opening_Car_Door_Sunset_F-1-1.webp",
   },
 ];
 
@@ -121,7 +121,7 @@ export default function SpeakerTransportPage() {
     <main className="bg-white dark:bg-gray-950 text-gray-900 dark:text-white font-sans">
       {/* Hero + Booking Form */}
       <ServicesHero
-        heroImage="/hero-cover.jpeg"
+        heroImage="/images/Speaker_Transport_Noble_Lane.webp"
         title="Speaker Transportation"
         description="Professional transportation for keynote speakers, conference presenters, and event speakers. Specialized service for conferences, corporate events, and speaking engagements across all industries."
       >

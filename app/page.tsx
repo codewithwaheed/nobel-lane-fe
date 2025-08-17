@@ -1,8 +1,8 @@
 "use client";
 import HeroSection from "./compoennts/HeroSection";
-import SkillsSection from "./compoennts/SkillsSection";
+// import SkillsSection from "./compoennts/SkillsSection";
 import { FleetSection } from "./compoennts/FleetSection";
-import OurTeamSection from "./compoennts/OurTeamSection";
+// import OurTeamSection from "./compoennts/OurTeamSection";
 import ReviewsSection from "./compoennts/ReviewsSection";
 import WhyChooseSection from "./compoennts/WhyChooseSection";
 import FAQSection from "./compoennts/FAQSection";
@@ -15,8 +15,8 @@ export default function Home() {
       <SpecialEventsSection />
       <FleetSection />
       <WhyChooseSection />
-      <OurTeamSection />
-      <SkillsSection title="Our Skills" />
+      {/* <OurTeamSection /> */}
+      {/* <SkillsSection /> */}
       <ReviewsSection />
       <FAQSection />
     </div>

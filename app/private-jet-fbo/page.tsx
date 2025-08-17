@@ -54,7 +54,7 @@ Our specialized FBO coordination team works directly with flight crews and groun
 Enjoy priority handling with expedited customs and immigration processes, dedicated aircraft-side pickup, and luxury amenities including refreshments and Wi-Fi during your ground transfer.
 
 Our professional chauffeurs are trained in executive protocol and discretion, ensuring your privacy and comfort throughout your journey in the Dallas-Fort Worth metroplex.`,
-    img: "/dallas-airport.jpeg",
+    img: "/images/Dallas_Fort_Worth_Sign_F.webp",
   },
   {
     title: "FBO Coordination Services",
@@ -63,7 +63,7 @@ Our professional chauffeurs are trained in executive protocol and discretion, en
 We maintain direct relationships with all major FBOs in the DFW area, allowing us to coordinate seamlessly with flight crews, ground handlers, and terminal staff.
 
 From flight plan monitoring to customs coordination, our team handles all ground logistics so you can focus on your business. Real-time updates keep you informed every step of the way.`,
-    img: "/contact-us.jpeg",
+    img: "/images/Chauffeur_Opening_Car_Door_Sunset_F-1-1.webp",
   },
 ];
 
@@ -123,7 +123,7 @@ export default function PrivateJetFBOPage() {
     <main className="bg-white dark:bg-gray-950 text-gray-900 dark:text-white font-sans">
       {/* Hero + Booking Form */}
       <ServicesHero
-        heroImage="/hero-cover.jpeg"
+        heroImage="/images/noble-lane-executive-airport-transportF.webp"
         title="Private Jet & FBO Coordination"
         description="Seamless ground transportation coordination with all DFW-area FBOs. Experience white-glove service from aircraft steps to your destination with real-time flight tracking (when owner allows tracking) and luxury fleet options."
       >

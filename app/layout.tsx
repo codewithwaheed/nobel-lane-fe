@@ -91,11 +91,28 @@ export default function RootLayout({
       <head>
         <script
           dangerouslySetInnerHTML={{
-            __html: `console.info('[Maps] Using key (masked): ${masked}');${
-              !mapsApiKey
-                ? "console.warn('[Maps] No API key found in env (expected NEXT_PUBLIC_GOOGLE_MAPS_API_KEY or GOOGLE_MAPS_API_KEY)');"
-                : ""
-            }`,
+            __html: `
+              console.info('[Maps] Using key (masked): ${masked}');
+              ${
+                !mapsApiKey
+                  ? "console.warn('[Maps] No API key found in env (expected NEXT_PUBLIC_GOOGLE_MAPS_API_KEY or GOOGLE_MAPS_API_KEY)');"
+                  : ""
+              }
+              
+              // Suppress hydration warnings from browser extensions
+              const originalConsoleError = console.error;
+              console.error = function(...args) {
+                if (typeof args[0] === 'string' && 
+                    (args[0].includes('Hydration failed') || 
+                     args[0].includes('data-new-gr-c-s-check-loaded') ||
+                     args[0].includes('data-gr-ext-installed') ||
+                     args[0].includes('chrome-extension') ||
+                     args[0].includes('browser extension'))) {
+                  return;
+                }
+                originalConsoleError.apply(console, args);
+              };
+            `,
           }}
         />
         {mapsApiKey ? (
@@ -108,6 +125,7 @@ export default function RootLayout({
       </head>
       <body
         className={`${poppins.variable} ${crimsonText.variable} antialiased font-sans overflow-x-hidden`}
+        suppressHydrationWarning={true}
       >
         <ClientLayout>{children}</ClientLayout>
       </body>

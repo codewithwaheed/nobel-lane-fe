@@ -1,6 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import {
+  calculatePricingBreakdown,
+  getSmartRecommendations,
+} from "@/lib/pricing-logic";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -14,6 +18,8 @@ import {
   Plus,
 } from "lucide-react";
 import type { BookingFormData } from "@/lib/booking-storage";
+import { clearBookingData } from "@/lib/booking-storage";
+import { createClient } from "@/utils/supabase/client";
 
 interface AdditionalInfoProps {
   isQuote: boolean;
@@ -34,10 +40,11 @@ export default function AdditionalInfo({
     phone: bookingData.phone || "",
     email: bookingData.email || "",
     extraStopsRequired: bookingData.extraStopsRequired || false,
-    extraStopsCount: bookingData.extraStopsCount || 1,
+    extraStopsCount: bookingData.extraStopsCount || 0,
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isCreatingQuote, setIsCreatingQuote] = useState(false);
 
   const handleChange = (field: string, value: string | boolean | number) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -74,11 +81,107 @@ export default function AdditionalInfo({
     return Object.keys(newErrors).length === 0;
   };
 
+  const createQuote = async (quoteData: Partial<BookingFormData>) => {
+    try {
+      setIsCreatingQuote(true);
+
+      // Get Supabase client for authentication
+      const supabase = createClient();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      // Calculate pricing breakdown using the existing bookingData structure
+      const pricingDetails = calculatePricingBreakdown(bookingData);
+
+      // Get smart recommendations
+      const recommendations = getSmartRecommendations(bookingData);
+
+      const payload = {
+        // Quote type and source
+        quoteType: "get-quote",
+        quoteSource: "website",
+
+        // Customer information - map from form fields
+        customerEmail: quoteData.email || formData.email,
+        customerPhone: quoteData.phone || formData.phone,
+
+        // Trip details - from booking data
+        from: bookingData.from,
+        to: bookingData.to,
+        date: bookingData.date,
+        time: bookingData.time,
+        passengers: bookingData.passengers,
+        tripType: bookingData.type,
+        duration: bookingData.duration,
+
+        // Location details
+        fromZipcode: bookingData.fromZipcode,
+        toZipcode: bookingData.toZipcode,
+        fromCity: bookingData.fromCity,
+        toCity: bookingData.toCity,
+        fromState: bookingData.fromState,
+        toState: bookingData.toState,
+        fromPlaceId: bookingData.fromPlaceId,
+        toPlaceId: bookingData.toPlaceId,
+        fromLat: bookingData.fromLat,
+        fromLng: bookingData.fromLng,
+        toLat: bookingData.toLat,
+        toLng: bookingData.toLng,
+
+        // Vehicle selection
+        selectedVehicle: bookingData.selectedVehicle,
+
+        // Pricing and recommendations
+        pricingDetails,
+        recommendations,
+
+        // Metadata
+        submittedAt: new Date().toISOString(),
+      };
+
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/create-quote`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${
+              session?.access_token || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+            }`,
+          },
+          body: JSON.stringify(payload),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to create quote");
+      }
+
+      await response.json();
+
+      // Clear booking data and navigate to success
+      clearBookingData();
+      onSubmit(formData);
+    } catch (error) {
+      console.error("Error creating quote:", error);
+      setErrors({
+        submit: "Failed to submit quote request. Please try again.",
+      });
+    } finally {
+      setIsCreatingQuote(false);
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
     if (validateForm()) {
-      onSubmit(formData);
+      if (isQuote) {
+        createQuote(formData);
+      } else {
+        onSubmit(formData);
+      }
     }
   };
 
@@ -86,11 +189,11 @@ export default function AdditionalInfo({
     <div className="max-w-4xl mx-auto px-4 sm:px-6">
       <div className="text-center mb-8 sm:mb-10">
         <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-4">
-          Pickup Information
+          {isQuote ? "Get a Quote" : "Pickup Information"}
         </h2>
         <p className="text-gray-600 text-sm sm:text-base max-w-2xl mx-auto">
           {isQuote
-            ? "Provide your contact details so we can send you a personalized quote"
+            ? "Provide your contact details and we'll send you a personalized quote within minutes"
             : "Help us provide the best service for your journey with additional details"}
         </p>
       </div>
@@ -176,99 +279,103 @@ export default function AdditionalInfo({
                   </p>
                 </div>
 
-                {/* Extra Stops */}
-                <div className="lg:col-span-2 border-t border-gray-100 pt-6">
-                  <div className="flex items-center gap-2 mb-4">
-                    <Plus className="w-5 h-5 text-amber-500" />
-                    <h3 className="text-lg font-semibold text-gray-900">
-                      Extra Stops
-                    </h3>
-                  </div>
-
-                  <div className="space-y-4">
-                    <div className="flex items-center space-x-3">
-                      <input
-                        type="checkbox"
-                        id="extraStopsRequired"
-                        checked={formData.extraStopsRequired}
-                        onChange={(e) =>
-                          handleChange("extraStopsRequired", e.target.checked)
-                        }
-                        className="w-4 h-4 text-amber-500 bg-gray-100 border-gray-300 rounded focus:ring-amber-500 focus:ring-2"
-                      />
-                      <Label
-                        htmlFor="extraStopsRequired"
-                        className="text-sm font-medium text-gray-700"
-                      >
-                        Extra stops required
-                      </Label>
+                {/* Extra Stops - Hidden for quotes */}
+                {!isQuote && (
+                  <div className="lg:col-span-2 border-t border-gray-100 pt-6">
+                    <div className="flex items-center gap-2 mb-4">
+                      <Plus className="w-5 h-5 text-amber-500" />
+                      <h3 className="text-lg font-semibold text-gray-900">
+                        Extra Stops
+                      </h3>
                     </div>
 
-                    {formData.extraStopsRequired && (
-                      <div className="ml-7 space-y-2">
-                        <Label
-                          htmlFor="extraStopsCount"
-                          className="text-sm font-medium text-gray-700 block"
-                        >
-                          Number of extra stops
-                        </Label>
-                        <select
-                          id="extraStopsCount"
-                          value={formData.extraStopsCount}
+                    <div className="space-y-4">
+                      <div className="flex items-center space-x-3">
+                        <input
+                          type="checkbox"
+                          id="extraStopsRequired"
+                          checked={formData.extraStopsRequired}
                           onChange={(e) =>
-                            handleChange(
-                              "extraStopsCount",
-                              parseInt(e.target.value)
-                            )
+                            handleChange("extraStopsRequired", e.target.checked)
                           }
-                          className="w-32 h-10 px-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                          className="w-4 h-4 text-amber-500 bg-gray-100 border-gray-300 rounded focus:ring-amber-500 focus:ring-2"
+                        />
+                        <Label
+                          htmlFor="extraStopsRequired"
+                          className="text-sm font-medium text-gray-700"
                         >
-                          {[1, 2, 3, 4, 5].map((num) => (
-                            <option key={num} value={num}>
-                              {num}
-                            </option>
-                          ))}
-                        </select>
-                        <p className="text-xs text-gray-500">
-                          Each extra stop adds $10 to your total cost
-                        </p>
+                          Extra stops required
+                        </Label>
                       </div>
-                    )}
-                  </div>
-                </div>
 
-                {/* Special Requests */}
-                <div className="lg:col-span-2 border-t border-gray-100 pt-6">
-                  <div className="flex items-center gap-2 mb-4">
-                    <MessageSquare className="w-5 h-5 text-amber-500" />
-                    <h3 className="text-lg font-semibold text-gray-900">
-                      Special Requests
-                    </h3>
+                      {formData.extraStopsRequired && (
+                        <div className="ml-7 space-y-2">
+                          <Label
+                            htmlFor="extraStopsCount"
+                            className="text-sm font-medium text-gray-700 block"
+                          >
+                            Number of extra stops
+                          </Label>
+                          <select
+                            id="extraStopsCount"
+                            value={formData.extraStopsCount}
+                            onChange={(e) =>
+                              handleChange(
+                                "extraStopsCount",
+                                parseInt(e.target.value)
+                              )
+                            }
+                            className="w-32 h-10 px-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                          >
+                            {[1, 2, 3, 4, 5].map((num) => (
+                              <option key={num} value={num}>
+                                {num}
+                              </option>
+                            ))}
+                          </select>
+                          <p className="text-xs text-gray-500">
+                            Each extra stop adds $10 to your total cost
+                          </p>
+                        </div>
+                      )}
+                    </div>
                   </div>
+                )}
 
-                  <div>
-                    <Label
-                      htmlFor="notes"
-                      className="text-sm font-medium text-gray-700 mb-1.5 block"
-                    >
-                      Additional Notes (Optional)
-                    </Label>
-                    <Textarea
-                      id="notes"
-                      placeholder="Any special requirements, requests, or additional information..."
-                      value={formData.notes}
-                      onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
-                        handleChange("notes", e.target.value)
-                      }
-                      rows={4}
-                      className="focus:border-amber-500 resize-none"
-                    />
-                    <p className="text-xs text-gray-500 mt-1">
-                      Let us know about child seats, accessibility needs,
-                      multiple stops, etc.
-                    </p>
+                {/* Special Requests - Hidden for quotes */}
+                {!isQuote && (
+                  <div className="lg:col-span-2 border-t border-gray-100 pt-6">
+                    <div className="flex items-center gap-2 mb-4">
+                      <MessageSquare className="w-5 h-5 text-amber-500" />
+                      <h3 className="text-lg font-semibold text-gray-900">
+                        Special Requests
+                      </h3>
+                    </div>
+
+                    <div>
+                      <Label
+                        htmlFor="notes"
+                        className="text-sm font-medium text-gray-700 mb-1.5 block"
+                      >
+                        Additional Notes (Optional)
+                      </Label>
+                      <Textarea
+                        id="notes"
+                        placeholder="Any special requirements, requests, or additional information..."
+                        value={formData.notes}
+                        onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+                          handleChange("notes", e.target.value)
+                        }
+                        rows={4}
+                        className="focus:border-amber-500 resize-none"
+                      />
+                      <p className="text-xs text-gray-500 mt-1">
+                        Let us know about child seats, accessibility needs,
+                        multiple stops, etc.
+                      </p>
+                    </div>
                   </div>
-                </div>
+                )}
               </>
             ) : (
               // Booking Flow - Flight Info and Notes
@@ -404,6 +511,13 @@ export default function AdditionalInfo({
           </div>
         </div>
 
+        {/* Quote Submission Error */}
+        {errors.submit && (
+          <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+            <p className="text-red-700 text-sm">{errors.submit}</p>
+          </div>
+        )}
+
         {/* Action Buttons - Consistent with VehicleSelection */}
         <div className="flex flex-col sm:flex-row gap-4 sm:justify-between pt-6">
           <Button
@@ -418,10 +532,20 @@ export default function AdditionalInfo({
 
           <Button
             type="submit"
-            className="flex items-center justify-center gap-2 h-12 text-sm sm:text-base font-medium bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 shadow-lg"
+            disabled={isCreatingQuote}
+            className="flex items-center justify-center gap-2 h-12 text-sm sm:text-base font-medium bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isQuote ? "Request Quote" : "Continue"}
-            <ChevronRight className="h-4 w-4" />
+            {isCreatingQuote ? (
+              <>
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                Creating Quote...
+              </>
+            ) : (
+              <>
+                {isQuote ? "Request Quote" : "Continue"}
+                <ChevronRight className="h-4 w-4" />
+              </>
+            )}
           </Button>
         </div>
       </form>

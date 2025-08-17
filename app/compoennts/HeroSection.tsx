@@ -11,7 +11,8 @@ export default function HeroSection() {
     <div
       className="min-h-[550px] md:min-h-[650px] bg-cover bg-center bg-no-repeat relative"
       style={{
-        backgroundImage: "url('/hero-cover.jpeg')",
+        backgroundImage:
+          "url('/images/noble-lane-executive-airport-transportF.webp')",
       }}
     >
       {/* Dark overlay for better text readability */}

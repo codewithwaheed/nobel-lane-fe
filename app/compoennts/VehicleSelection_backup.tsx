@@ -92,14 +92,6 @@ export default function VehicleSelection({
   const [pricingError, setPricingError] = useState<string | null>(null);
   const hasSetDefaultVehicle = useRef(false);
 
-  // Debug logging to troubleshoot pricing display issue
-  console.log("VehicleSelection props:", {
-    showPricing,
-    isQuoteFlow,
-    hasPricing: !!pricing,
-    vehicleCount: pricing?.vehicles?.length || 0,
-  });
-
   type VehicleWithPricing = VehicleOption & {
     pricingData?: PricingVehicle;
     hasPricing?: boolean;
@@ -116,8 +108,9 @@ export default function VehicleSelection({
     };
   }, [tripData]);
 
-  // Deduplicated fetch to prevent repeated calls
+  // Deduplicated fetch with AbortController to prevent repeated calls
   const lastPayloadRef = useRef<string | null>(null);
+  const abortRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
     // use primitive deps to avoid object identity reruns
@@ -127,33 +120,13 @@ export default function VehicleSelection({
     const duration = stableTripData?.duration ?? null;
     const airport = tripData?.airport_code ?? null;
 
-    console.log("VehicleSelection pricing useEffect triggered:", {
-      from,
-      to,
-      type,
-      duration,
-      isQuoteFlow,
-      tripData,
-    });
-
     if (!from) {
-      console.log("No 'from' address - skipping pricing fetch");
       onPricingStatus?.({ loading: false, hasAnyPricing: false });
       return;
     }
-
-    // Skip pricing fetch for quote flows
-    if (isQuoteFlow) {
-      console.log("Quote flow detected - skipping pricing fetch");
-      onPricingStatus?.({ loading: false, hasAnyPricing: false });
-      return;
-    }
-
-    console.log("Starting pricing fetch...");
 
     const fetchPricing = async () => {
       setPricingError(null);
-      let hasSetError = false;
 
       const payload: {
         service_type: "one-way" | "hourly";
@@ -197,6 +170,11 @@ export default function VehicleSelection({
       // skip identical payload
       if (lastPayloadRef.current === payloadStr) return;
 
+      // cancel previous
+      if (abortRef.current) abortRef.current.abort();
+      const controller = new AbortController();
+      abortRef.current = controller;
+
       lastPayloadRef.current = payloadStr;
       setPricingLoading(true);
       onPricingStatus?.({ loading: true, hasAnyPricing: false });
@@ -224,55 +202,12 @@ export default function VehicleSelection({
             "x-debug-pricing": "1",
           },
           body: payloadStr,
+          signal: controller.signal,
         });
 
         if (!res.ok) {
-          let errorData;
-          try {
-            errorData = await res.json();
-          } catch {
-            const errText = await res.text();
-            throw new Error(`HTTP ${res.status}: ${errText}`);
-          }
-
-          // Handle specific error codes
-          if (errorData.error_code === "UNKNOWN_ZIP") {
-            setPricing(null); // Clear any previous pricing data
-            setPricingError(
-              "This area is not currently in our service zones. Please contact us for pricing information."
-            );
-            onPricingStatus?.({ loading: false, hasAnyPricing: false });
-            hasSetError = true;
-            return;
-          }
-
-          if (errorData.error_code === "NO_PRICING") {
-            setPricing(null); // Clear any previous pricing data
-            setPricingError(
-              "No pricing available for this route. Please contact us for a custom quote."
-            );
-            onPricingStatus?.({ loading: false, hasAnyPricing: false });
-            hasSetError = true;
-            return;
-          }
-
-          if (
-            errorData.error_code === "MISSING_FIELDS" ||
-            errorData.error_code === "MISSING_DROPOFF_ZIP"
-          ) {
-            setPricing(null); // Clear any previous pricing data
-            setPricingError(
-              "Please ensure both pickup and destination are selected."
-            );
-            onPricingStatus?.({ loading: false, hasAnyPricing: false });
-            hasSetError = true;
-            return;
-          }
-
-          throw new Error(
-            errorData.error ||
-              `HTTP ${res.status}: ${errorData.error_code || "Unknown error"}`
-          );
+          const errText = await res.text();
+          throw new Error(`HTTP ${res.status}: ${errText}`);
         }
 
         const data = (await res.json()) as PricingResponse;
@@ -282,53 +217,44 @@ export default function VehicleSelection({
         onPricingStatus?.({ loading: false, hasAnyPricing });
       } catch (e: unknown) {
         const err = e as { name?: string; message?: string };
+        if (err?.name === "AbortError") return; // cancelled
         console.error("Error fetching pricing:", err?.message ?? e);
-
-        // Only set error if it wasn't already handled (like UNKNOWN_ZIP)
-        if (!hasSetError) {
-          setPricing(null); // Clear any previous pricing data
-          setPricingError(
-            "Unable to retrieve pricing at this time. Please contact us for pricing information."
-          );
-        }
+        setPricingError(
+          "This area is not currently in our service zones. Please contact us for pricing information."
+        );
         onPricingStatus?.({ loading: false, hasAnyPricing: false });
       } finally {
         setPricingLoading(false);
+        abortRef.current = null;
       }
     };
 
     fetchPricing();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
+    return () => {
+      if (abortRef.current) abortRef.current.abort();
+    };
   }, [
     stableTripData?.fromZipcode,
     stableTripData?.toZipcode,
     stableTripData?.type,
     stableTripData?.duration,
+    tripData?.airport_code,
     tripData?.isEarlyOrLate,
+    tripData?.isInternational,
     tripData?.isHoliday,
+    tripData?.needsFlightTracking,
+    tripData?.extraStops,
     onPricingStatus,
-    isQuoteFlow,
-  ]); // Skip pricing fetch for quote flows
+  ]); // Removed showPricing - always fetch, only display conditionally
 
   // Map static vehicles with dynamic pricing
   const vehiclesWithPricing = useMemo(() => {
-    console.log("Mapping vehicles with pricing:", {
-      pricingResponse: pricing,
-      vehicleFleetCount: vehicleFleet.length,
-      pricingVehiclesCount: pricing?.vehicles?.length || 0,
-    });
-
     return vehicleFleet.map((vehicle) => {
       // Find the best pricing data for this vehicle (lowest price)
       const matchingPricing = pricing?.vehicles.filter(
         (p) => p.vehicle_id === vehicle.vehicleId
       );
-
-      console.log(`Vehicle ${vehicle.vehicleId} mapping:`, {
-        vehicleId: vehicle.vehicleId,
-        matchingPricingCount: matchingPricing?.length || 0,
-        matchingPricing: matchingPricing,
-      });
 
       // Get the lowest priced option for this vehicle type
       const pricingData =
@@ -392,12 +318,11 @@ export default function VehicleSelection({
     <div className="max-w-6xl mx-auto px-4 sm:px-6">
       <div className="text-center mb-8 sm:mb-10">
         <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-4">
-          {isQuoteFlow ? "Select Service for Quote" : "Choose Your Service"}
+          Choose Your Service
         </h2>
         <p className="text-gray-600 text-sm sm:text-base max-w-2xl mx-auto">
-          {isQuoteFlow
-            ? "Select your preferred service type and we'll provide you with a personalized quote."
-            : "Select the perfect vehicle for your journey. Each service includes professional chauffeur, complimentary amenities, and premium comfort."}
+          Select the perfect vehicle for your journey. Each service includes
+          professional chauffeur, complimentary amenities, and premium comfort.
         </p>
 
         {/* Pricing Note */}
@@ -434,16 +359,8 @@ export default function VehicleSelection({
             tripData?.type === "by-the-hour";
 
           // Show pricing only if not in quote flow AND pricing exists
-          const shouldShowPricing = showPricing && v.hasPricing && p;
-
-          console.log("Vehicle pricing check:", {
-            vehicleId: v.id,
-            showPricing,
-            isQuoteFlow,
-            hasPricing: v.hasPricing,
-            pricingData: !!p,
-            shouldShowPricing,
-          });
+          const shouldShowPricing =
+            showPricing && !isQuoteFlow && v.hasPricing && p;
 
           return (
             <Card
@@ -548,16 +465,16 @@ export default function VehicleSelection({
                     </div>
                   </div>
 
-                  {/* Contact for pricing for quote flows or if no pricing available */}
-                  {(isQuoteFlow ||
-                    (showPricing &&
-                      !pricingLoading &&
-                      (!v.hasPricing || !p))) && (
-                    <div className="mt-3 text-xs text-amber-600 font-medium flex items-center justify-center gap-1">
-                      <Phone className="w-3 h-3" />
-                      Contact for pricing
-                    </div>
-                  )}
+                  {/* Contact for pricing if no price, not during loading, and not in quote flow */}
+                  {showPricing &&
+                    !pricingLoading &&
+                    !isQuoteFlow &&
+                    (!v.hasPricing || !p) && (
+                      <div className="mt-3 text-xs text-amber-600 font-medium flex items-center justify-center gap-1">
+                        <Phone className="w-3 h-3" />
+                        Contact for pricing
+                      </div>
+                    )}
 
                   {/* Description */}
                   <div className="text-xs text-gray-600 leading-relaxed px-1">

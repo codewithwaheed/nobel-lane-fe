@@ -17,7 +17,7 @@ export default function ExecutiveTransportationPage() {
     <main className="bg-white dark:bg-gray-950 text-gray-900 dark:text-white font-sans">
       {/* Hero + Booking Form */}
       <ServicesHero
-        heroImage="/contact-us.jpeg"
+        heroImage="/images/Chauffeur_Opening_Car_Door_Sunset_F-1-1.webp"
         title="Executive Transportation"
       >
         <BookingForm />

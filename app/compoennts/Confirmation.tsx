@@ -231,10 +231,10 @@ export default function Confirmation({
           </a>{" "}
           or{" "}
           <a
-            href="mailto:info@gonoblelane.com"
+            href="mailto:office@gonoblelane.com"
             className="text-amber-600 hover:underline"
           >
-            info@gonoblelane.com
+            office@gonoblelane.com
           </a>
         </div>
       </div>

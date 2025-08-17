@@ -4,10 +4,16 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { Calendar } from "@/components/ui/calendar";
-import { CalendarIcon, TimerIcon } from "lucide-react";
+import { CalendarIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import type { BookingFormData } from "@/lib/booking-storage";
-import { saveBookingData } from "@/lib/booking-storage";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 import {
   Popover,
@@ -23,10 +29,10 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
 import React from "react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns/format";
+import AddressAutocomplete from "./AddressAutocomplete";
 
 const FormSchema = z
   .object({
@@ -34,13 +40,15 @@ const FormSchema = z
     from: z.string().min(2, {
       message: "Address must be at least 2 characters.",
     }),
+    fromZipcode: z.string().optional(), // Add ZIP code field
     to: z.string().optional(),
+    toZipcode: z.string().optional(), // Add ZIP code field
     duration: z.string().optional(),
     date: z.date().min(new Date(), {
       message: "Date must be in the future.",
     }),
-    time: z.string().min(2, {
-      message: "Time must be at least 2 characters.",
+    time: z.string().min(1, {
+      message: "Time is required.",
     }),
   })
   .superRefine((data, ctx) => {
@@ -65,6 +73,61 @@ const FormSchema = z
     }
   });
 
+// Time slots array - same as TripDetails
+const timeSlots = [
+  "12:00 AM",
+  "12:30 AM",
+  "1:00 AM",
+  "1:30 AM",
+  "2:00 AM",
+  "2:30 AM",
+  "3:00 AM",
+  "3:30 AM",
+  "4:00 AM",
+  "4:30 AM",
+  "5:00 AM",
+  "5:30 AM",
+  "6:00 AM",
+  "6:30 AM",
+  "7:00 AM",
+  "7:30 AM",
+  "8:00 AM",
+  "8:30 AM",
+  "9:00 AM",
+  "9:30 AM",
+  "10:00 AM",
+  "10:30 AM",
+  "11:00 AM",
+  "11:30 AM",
+  "12:00 PM",
+  "12:30 PM",
+  "1:00 PM",
+  "1:30 PM",
+  "2:00 PM",
+  "2:30 PM",
+  "3:00 PM",
+  "3:30 PM",
+  "4:00 PM",
+  "4:30 PM",
+  "5:00 PM",
+  "5:30 PM",
+  "6:00 PM",
+  "6:30 PM",
+  "7:00 PM",
+  "7:30 PM",
+  "8:00 PM",
+  "8:30 PM",
+  "9:00 PM",
+  "9:30 PM",
+  "10:00 PM",
+  "10:30 PM",
+  "11:00 PM",
+  "11:30 PM",
+];
+
+// Duration options - same as TripDetails
+const durationOptions = Array.from({ length: 24 }, (_, i) => i + 1);
+
 export function BookingForm({ isModal = false }: { isModal?: boolean }) {
   const router = useRouter();
   const form = useForm<z.infer<typeof FormSchema>>({
@@ -72,7 +135,9 @@ export function BookingForm({ isModal = false }: { isModal?: boolean }) {
     defaultValues: {
       type: "one-way",
       from: "",
+      fromZipcode: "",
       to: "",
+      toZipcode: "",
       duration: "",
       date: new Date(),
       time: "",
@@ -98,23 +163,38 @@ export function BookingForm({ isModal = false }: { isModal?: boolean }) {
         completedSteps: [], // No steps completed yet
       };
 
-      // Save form data to localStorage using utility function
-      const saved = saveBookingData(bookingData);
+      console.log("Form submitted with data:", bookingData);
 
-      if (saved) {
-        // Redirect based on action type
-        if (actionType === "quote") {
-          router.push("/book-now?type=quote");
-        } else {
-          router.push("/book-now?type=book-now");
-        }
-      } else {
-        // Handle error case - could show a toast notification
-        console.error("Failed to save booking data");
-        alert(
-          "Sorry, there was an error saving your booking data. Please try again."
-        );
+      // Create URL parameters to pass the form data
+      const urlParams = new URLSearchParams();
+
+      // Add basic flow type
+      if (actionType === "quote") {
+        urlParams.set("type", "quote");
       }
+
+      // Add form data as URL parameters
+      urlParams.set("tripType", data.type);
+      urlParams.set("from", data.from);
+      urlParams.set("fromZipcode", data.fromZipcode || "");
+
+      if (data.to) {
+        urlParams.set("to", data.to);
+        urlParams.set("toZipcode", data.toZipcode || "");
+      }
+
+      if (data.duration) {
+        urlParams.set("duration", data.duration);
+      }
+
+      urlParams.set("date", format(data.date, "yyyy-MM-dd"));
+      urlParams.set("time", data.time);
+      urlParams.set("prefilled", "true"); // Flag to indicate data is pre-filled
+
+      // Navigate with the form data as URL parameters
+      const targetUrl = `/book-now?${urlParams.toString()}`;
+      console.log("Navigating to:", targetUrl);
+      router.push(targetUrl);
     };
   }
 
@@ -174,10 +254,19 @@ export function BookingForm({ isModal = false }: { isModal?: boolean }) {
             <FormItem className="mb-4">
               <FormLabel>From</FormLabel>
               <FormControl>
-                <Input
-                  className="bg-white"
+                <AddressAutocomplete
+                  id="from"
+                  value={field.value}
                   placeholder="Address, airport, hotel, ..."
-                  {...field}
+                  onChange={field.onChange}
+                  onSelect={(placeDetails) => {
+                    field.onChange(placeDetails.formatted_address);
+                    // Store ZIP code for pricing API - same as TripDetails
+                    if (placeDetails.zipcode) {
+                      form.setValue("fromZipcode", placeDetails.zipcode);
+                    }
+                  }}
+                  className="bg-white h-10"
                 />
               </FormControl>
               <FormMessage />
@@ -194,10 +283,19 @@ export function BookingForm({ isModal = false }: { isModal?: boolean }) {
               <FormItem className="mb-4">
                 <FormLabel>To</FormLabel>
                 <FormControl>
-                  <Input
-                    className="bg-white"
+                  <AddressAutocomplete
+                    id="to"
+                    value={field.value || ""}
                     placeholder="Address, airport, hotel, ..."
-                    {...field}
+                    onChange={field.onChange}
+                    onSelect={(placeDetails) => {
+                      field.onChange(placeDetails.formatted_address);
+                      // Store ZIP code for pricing API - same as TripDetails
+                      if (placeDetails.zipcode) {
+                        form.setValue("toZipcode", placeDetails.zipcode);
+                      }
+                    }}
+                    className="bg-white h-10"
                   />
                 </FormControl>
                 <FormMessage />
@@ -215,14 +313,18 @@ export function BookingForm({ isModal = false }: { isModal?: boolean }) {
               <FormItem className="mb-4">
                 <FormLabel>Duration (Hours)</FormLabel>
                 <FormControl>
-                  <Input
-                    className="bg-white"
-                    placeholder="e.g., 2, 4, 8"
-                    type="number"
-                    min="1"
-                    max="24"
-                    {...field}
-                  />
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <SelectTrigger className="bg-white h-10">
+                      <SelectValue placeholder="Select duration" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {durationOptions.map((hour) => (
+                        <SelectItem key={hour} value={hour.toString()}>
+                          {hour} {hour === 1 ? "hour" : "hours"}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -230,7 +332,7 @@ export function BookingForm({ isModal = false }: { isModal?: boolean }) {
           />
         )}
         <div className="flex flex-col sm:flex-row gap-4 mb-6">
-          <div className="flex-1 flex flex-col gap-3">
+          <div className="flex-[2] flex flex-col gap-3">
             <FormField
               control={form.control}
               name="date"
@@ -243,7 +345,7 @@ export function BookingForm({ isModal = false }: { isModal?: boolean }) {
                         <Button
                           variant={"outline"}
                           className={cn(
-                            " pl-3 text-left font-normal h-10 text-sm",
+                            "pl-3 text-left font-normal h-10 text-sm",
                             !field.value && "text-muted-foreground"
                           )}
                         >
@@ -277,19 +379,21 @@ export function BookingForm({ isModal = false }: { isModal?: boolean }) {
               control={form.control}
               name="time"
               render={({ field }) => (
-                <FormItem className="mb-4">
+                <FormItem className="flex flex-col">
                   <FormLabel>Time</FormLabel>
                   <FormControl>
-                    <div className="relative">
-                      <Input
-                        id="time"
-                        placeholder=""
-                        {...field}
-                        className="bg-white border-gray-300 focus:border-primary focus:ring-primary/20"
-                        type="time"
-                      />
-                      <TimerIcon className="absolute opacity-80 right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500 pointer-events-none" />
-                    </div>
+                    <Select value={field.value} onValueChange={field.onChange}>
+                      <SelectTrigger className="bg-white h-10 text-sm font-normal text-left">
+                        <SelectValue placeholder="Select time" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {timeSlots.map((time) => (
+                          <SelectItem key={time} value={time}>
+                            {time}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </FormControl>
                   <FormMessage />
                 </FormItem>

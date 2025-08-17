@@ -4,6 +4,13 @@ import Image from "next/image";
 import Link from "next/link";
 import React from "react";
 import { useBooking } from "../contexts/BookingContext";
+import {
+  Facebook,
+  Instagram,
+  Linkedin,
+  Twitter,
+  Music, // TikTok icon alternative
+} from "lucide-react";
 
 export default function Footer() {
   const { setIsBookingModalOpen } = useBooking();
@@ -63,6 +70,56 @@ export default function Footer() {
             </li>
           </ul>
         </div>
+
+        {/* Social Media Links */}
+        <div className="flex justify-center space-x-6 mb-6">
+          <a
+            href="https://www.facebook.com/profile.php?id=61579230786610"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-gray-400 hover:text-yellow-400 transition-colors duration-300"
+            aria-label="Facebook"
+          >
+            <Facebook className="w-5 h-5" />
+          </a>
+          <a
+            href="https://www.instagram.com/gonoblelane5"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-gray-400 hover:text-yellow-400 transition-colors duration-300"
+            aria-label="Instagram"
+          >
+            <Instagram className="w-5 h-5" />
+          </a>
+          <a
+            href="https://x.com/NobleLane89508"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-gray-400 hover:text-yellow-400 transition-colors duration-300"
+            aria-label="X (Twitter)"
+          >
+            <Twitter className="w-5 h-5" />
+          </a>
+          <a
+            href="https://www.linkedin.com/company/noble-lane-executive-transport"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-gray-400 hover:text-yellow-400 transition-colors duration-300"
+            aria-label="LinkedIn"
+          >
+            <Linkedin className="w-5 h-5" />
+          </a>
+          <a
+            href="https://www.tiktok.com/@nooblelane"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-gray-400 hover:text-yellow-400 transition-colors duration-300"
+            aria-label="TikTok"
+          >
+            <Music className="w-5 h-5" />
+          </a>
+        </div>
+
         <hr className="my-6 border-gray-600 sm:mx-auto lg:my-8" />
         <span className="block text-sm text-gray-400 sm:text-center">
           © 2025{" "}

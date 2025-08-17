@@ -53,7 +53,7 @@ const serviceSpotlight = [
 Our professional chauffeurs are trained in corporate etiquette and understand the importance of punctuality and discretion. Every vehicle is equipped with business amenities to ensure productivity during travel.
 
 From board meetings to client presentations, roadshows to corporate events, we provide reliable transportation that reflects your company's professional standards and commitment to excellence.`,
-    img: "/business-car.jpeg",
+    img: "/images/Business_Professionals_Working_Luxury_Car_F-1.webp",
   },
   {
     title: "Multi-City Corporate Travel",
@@ -62,7 +62,7 @@ From board meetings to client presentations, roadshows to corporate events, we p
 We handle complex itineraries across multiple cities, coordinating with your schedule and ensuring seamless transitions between meetings, hotels, and airports.
 
 Our advanced booking system allows for real-time adjustments and our dedicated corporate account managers provide personalized service for your ongoing transportation needs.`,
-    img: "/contact-us.jpeg",
+    img: "/images/Chauffeur_Opening_Car_Door_Sunset_F-1-1.webp",
   },
 ];
 
@@ -121,7 +121,7 @@ export default function CorporateCarServicePage() {
     <main className="bg-white dark:bg-gray-950 text-gray-900 dark:text-white font-sans">
       {/* Hero + Booking Form */}
       <ServicesHero
-        heroImage="/hero-cover.jpeg"
+        heroImage="/images/Business_Professionals_Working_Luxury_Car_F-1.webp"
         title="Corporate Car Service"
         description="Professional executive transportation for meetings, roadshows, and corporate travel. Experience business-class service with mobile office amenities and discreet pickup options."
       >
