@@ -784,8 +784,8 @@ function generateBookingConfirmationHTML(data: BookingEmailData): string {
                     Premium Luxury Transportation Services
                 </div>
                 <div class="contact-info">
-                    📞 <a href="tel:+1234567890">Call us anytime</a> | 
-                    📧 <a href="mailto:support@gonoblelane.com">support@gonoblelane.com</a> | 
+                    📞 <a href="tel:+12142250105">Call us anytime</a> | 
+                    📧 <a href="mailto:office@gonoblelane.com">office@gonoblelane.com</a> | 
                     🌐 <a href="https://gonoblelane.com">gonoblelane.com</a>
                 </div>
                 <div class="social-links">
@@ -1172,7 +1172,7 @@ function generateQuoteConfirmationHTML(data: QuoteEmailData): string {
                     Premium Luxury Transportation Services
                 </div>
                 <div class="contact-info">
-                    📞 <a href="tel:+1234567890">Call us anytime</a> | 
+                    📞 <a href="tel:+12142250105">Call us anytime</a> | 
                     📧 <a href="mailto:office@gonoblelane.com">office@gonoblelane.com</a> | 
                     🌐 <a href="https://gonoblelane.com">gonoblelane.com</a>
                 </div>
