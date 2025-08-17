@@ -63,7 +63,7 @@ export const siteMetadata: Metadata = {
     },
   },
   alternates: {
-    canonical: "https://noblelane.com",
+    canonical: "https://www.gonoblelane.com/",
   },
   category: "Transportation",
 };

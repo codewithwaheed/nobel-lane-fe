@@ -76,9 +76,9 @@ export function FleetSection() {
   return (
     <div className=" bg-[#F9FAFB]">
       <div className="max-w-7xl mx-auto px-4 py-12 my-10">
-        <h1 className="text-2xl md:text-4xl text-center font-bold mb-3">
+        <h2 className="text-2xl md:text-4xl text-center font-bold mb-3">
           The Noble Fleet
-        </h1>
+        </h2>
         <p className="text-gray-600 md:text-xl text-center mt-2 mb-8  md:max-w-3xl mx-auto font-crimson italic">
           A Full Line of Luxurious Vehicles
         </p>

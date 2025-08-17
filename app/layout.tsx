@@ -6,13 +6,15 @@ import ClientLayout from "./ClientLayout";
 const poppins = Poppins({
   variable: "--font-geist-sans",
   subsets: ["latin"],
-  weight: ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
+  weight: ["400", "600"],
+  display: 'swap',
 });
 
 const crimsonText = Crimson_Text({
   variable: "--font-crimson",
   subsets: ["latin"],
-  weight: ["400", "600", "700"],
+  weight: ["400"],
+  display: 'swap',
 });
 
 export const metadata: Metadata = {
@@ -89,6 +91,11 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
+        <link rel="dns-prefetch" href="//fonts.googleapis.com" />
+        <link rel="preconnect" href="//cdnjs.cloudflare.com" />
+        <link rel="preload" as="image" href="/images/noble-lane-executive-airport-transportF.webp" />
+        <link rel="canonical" href="https://www.gonoblelane.com/" />
+        <script type="application/ld+json" id="schema-placeholder">{}</script>
         <script
           dangerouslySetInnerHTML={{
             __html: `
