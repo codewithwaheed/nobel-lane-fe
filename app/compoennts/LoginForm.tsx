@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { createClient } from "@/utils/supabase/client";
 import { Eye, EyeOff, Mail, Lock, User, Phone, Building } from "lucide-react";
+import { formatPhoneInput } from "@/lib/phone-validation";
 
 type AuthMode = "signin" | "signup";
 
@@ -40,6 +41,12 @@ export function LoginForm({
     phone: "",
     company: "",
   });
+
+  const handlePhoneChange = (value: string) => {
+    // Format the phone number as user types
+    const formatted = formatPhoneInput(value);
+    setFormData((prev) => ({ ...prev, phone: formatted }));
+  };
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -368,7 +375,7 @@ export function LoginForm({
                     name="phone"
                     type="tel"
                     value={formData.phone}
-                    onChange={handleInputChange}
+                    onChange={(e) => handlePhoneChange(e.target.value)}
                     className="pl-10 h-11"
                     placeholder="+1 (555) 123-4567"
                   />

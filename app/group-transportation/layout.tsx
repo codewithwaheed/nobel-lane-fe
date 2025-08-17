@@ -22,7 +22,7 @@ export const metadata: Metadata = {
       "Group Transportation Dallas Fort Worth | Corporate Event Transportation",
     description:
       "Professional group transportation Dallas Fort Worth. Corporate event transportation, wedding shuttles, and large group coordination.",
-    url: "https://noblelane.com/group-transportation",
+    url: "https://gonoblelane.com/group-transportation",
     images: [
       {
         url: "/group-transportation-og.jpg",

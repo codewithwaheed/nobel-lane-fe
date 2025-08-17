@@ -349,6 +349,7 @@ async function handlePaymentSuccess(
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
+            type: "booking",
             bookingId: booking.id,
             customerEmail: metadata.userEmail || paymentIntent.receipt_email ||
               metadata.customerEmail,
@@ -361,6 +362,8 @@ async function handlePaymentSuccess(
             vehicleName: metadata.vehicleName || "Standard Vehicle",
             totalAmount: paymentIntent.amount / 100,
             confirmationNumber,
+            sendSMS: true, // Enable SMS notifications for bookings
+            phoneNumber: metadata.userPhone || metadata.customerPhone,
           }),
         },
       );
@@ -372,13 +375,6 @@ async function handlePaymentSuccess(
     } catch (emailError) {
       console.error("📧 Email sending failed:", emailError);
       // Don't fail the booking if email fails
-    }
-
-    // 4. Optional: Send SMS notification
-    const customerPhone = metadata.userPhone || metadata.customerPhone;
-    if (customerPhone) {
-      console.log("📱 SMS notification would be sent to:", customerPhone);
-      // Implement SMS sending here using Twilio or similar
     }
 
     return new Response(

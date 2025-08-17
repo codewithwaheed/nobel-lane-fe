@@ -31,7 +31,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "en_US",
-    url: "https://noblelane.com",
+    url: "https://gonoblelane.com",
     title: "Executive Car Service Dallas | Luxury Chauffeur DFW | Noble Lane",
     description:
       "Noble Lane offers premium executive car service in Dallas-Fort Worth. AI-powered booking, luxury vehicles, professional chauffeurs, and real-time flight tracking for VIP clients.",

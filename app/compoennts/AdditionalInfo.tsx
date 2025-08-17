@@ -20,6 +20,10 @@ import {
 import type { BookingFormData } from "@/lib/booking-storage";
 import { clearBookingData } from "@/lib/booking-storage";
 import { createClient } from "@/utils/supabase/client";
+import {
+  validateUSPhoneNumber,
+  formatPhoneInput,
+} from "@/lib/phone-validation";
 
 interface AdditionalInfoProps {
   isQuote: boolean;
@@ -46,6 +50,17 @@ export default function AdditionalInfo({
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isCreatingQuote, setIsCreatingQuote] = useState(false);
 
+  const handlePhoneChange = (value: string) => {
+    // Format the phone number as user types
+    const formatted = formatPhoneInput(value);
+    setFormData((prev) => ({ ...prev, phone: formatted }));
+
+    // Clear error when user starts typing
+    if (errors.phone) {
+      setErrors((prev) => ({ ...prev, phone: "" }));
+    }
+  };
+
   const handleChange = (field: string, value: string | boolean | number) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
 
@@ -65,8 +80,14 @@ export default function AdditionalInfo({
           "Please provide either a phone number or email address";
       }
 
-      if (formData.phone && !/^\+?[\d\s\-\(\)]+$/.test(formData.phone)) {
-        newErrors.phone = "Please enter a valid phone number";
+      if (formData.phone) {
+        const phoneValidation = validateUSPhoneNumber(formData.phone);
+        if (!phoneValidation.isValid) {
+          newErrors.phone = "Please enter a valid phone number";
+        } else if (!phoneValidation.isUSCanada) {
+          newErrors.phone =
+            "Please enter a US phone number for SMS notifications";
+        }
       }
 
       if (
@@ -226,7 +247,7 @@ export default function AdditionalInfo({
                         type="tel"
                         placeholder="+1 (555) 123-4567"
                         value={formData.phone}
-                        onChange={(e) => handleChange("phone", e.target.value)}
+                        onChange={(e) => handlePhoneChange(e.target.value)}
                         className={`h-12 ${
                           errors.phone
                             ? "border-red-500 focus:border-red-500"

@@ -21,7 +21,7 @@ export const metadata: Metadata = {
     title: "About Noble Lane - Professional Chauffeur Service Dallas",
     description:
       "Dallas transportation leaders with 60+ years experience. Professional chauffeur service and VIP car service Dallas with AI-powered efficiency.",
-    url: "https://noblelane.com/about",
+    url: "https://gonoblelane.com/about",
     images: [
       {
         url: "/team-og.jpg",

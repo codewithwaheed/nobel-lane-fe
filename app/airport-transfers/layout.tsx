@@ -21,7 +21,7 @@ export const metadata: Metadata = {
     title: "DFW Airport Transportation | Black Car Service Dallas Airport",
     description:
       "Professional DFW airport transportation and black car service. Flight monitoring, luxury vehicles, and reliable airport transfers.",
-    url: "https://noblelane.com/airport-transfers",
+    url: "https://gonoblelane.com/airport-transfers",
     images: [
       {
         url: "/airport-transfers-og.jpg",

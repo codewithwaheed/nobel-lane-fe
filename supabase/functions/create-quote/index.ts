@@ -140,9 +140,7 @@ serve(async (req) => {
             defaultValue = 0,
         ): number => {
             if (typeof value === "number") {
-                return isNaN(value)
-                    ? defaultValue
-                    : value;
+                return isNaN(value) ? defaultValue : value;
             }
             if (typeof value === "string") {
                 const parsed = globalThis.parseFloat(value);
@@ -260,6 +258,60 @@ serve(async (req) => {
         }
 
         console.log("✅ Quote created successfully:", quote.id);
+
+        // Send quote confirmation email
+        try {
+            const quoteNumber = `QT-${
+                String(quote.id).slice(0, 8).toUpperCase()
+            }`;
+            const emailResponse = await fetch(
+                `${
+                    Deno.env.get("SUPABASE_URL")
+                }/functions/v1/send-booking-confirmation`,
+                {
+                    method: "POST",
+                    headers: {
+                        "Authorization": `Bearer ${
+                            Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")
+                        }`,
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        type: "quote",
+                        quoteId: quote.id,
+                        quoteNumber: quoteNumber,
+                        customerEmail: quoteRequest.customerEmail,
+                        customerName: `${
+                            quoteRequest.customerFirstName || "Valued"
+                        } ${quoteRequest.customerLastName || "Customer"}`,
+                        pickupAddress: quoteRequest.from,
+                        destinationAddress: quoteRequest.to,
+                        pickupDate: new Date(quoteRequest.date)
+                            .toLocaleDateString(),
+                        pickupTime: quoteRequest.time,
+                        passengers: quoteRequest.passengers || 1,
+                        vehicleName: "To be determined based on requirements",
+                        sendSMS: true, // Enable SMS notifications for quotes
+                        phoneNumber: quoteRequest.customerPhone,
+                    }),
+                },
+            );
+
+            console.log(
+                "📧 Quote email service response:",
+                emailResponse.ok ? "sent" : "failed",
+            );
+
+            if (!emailResponse.ok) {
+                console.error(
+                    "📧 Email sending failed:",
+                    await emailResponse.text(),
+                );
+            }
+        } catch (emailError) {
+            console.error("📧 Quote email sending failed:", emailError);
+            // Don't fail the quote creation if email fails
+        }
 
         // Return success response
         return new Response(

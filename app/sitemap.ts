@@ -1,33 +1,36 @@
 import { MetadataRoute } from "next";
 
+// Static generation configuration for Cloudflare Pages
+export const dynamic = "force-static";
+
 export default function sitemap(): MetadataRoute.Sitemap {
   return [
     {
-      url: "https://noblelane.com",
+      url: "https://gonoblelane.com",
       lastModified: new Date(),
       changeFrequency: "weekly",
       priority: 1,
     },
     {
-      url: "https://noblelane.com/executive-car-service-dallas",
+      url: "https://gonoblelane.com/executive-car-service-dallas",
       lastModified: new Date(),
       changeFrequency: "monthly",
       priority: 0.8,
     },
     {
-      url: "https://noblelane.com/luxury-chauffeur-dfw",
+      url: "https://gonoblelane.com/luxury-chauffeur-dfw",
       lastModified: new Date(),
       changeFrequency: "monthly",
       priority: 0.8,
     },
     {
-      url: "https://noblelane.com/airport-transportation",
+      url: "https://gonoblelane.com/airport-transportation",
       lastModified: new Date(),
       changeFrequency: "monthly",
       priority: 0.7,
     },
     {
-      url: "https://noblelane.com/private-jet-transportation",
+      url: "https://gonoblelane.com/private-jet-transportation",
       lastModified: new Date(),
       changeFrequency: "monthly",
       priority: 0.7,

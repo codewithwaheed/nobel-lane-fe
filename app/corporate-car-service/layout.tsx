@@ -22,7 +22,7 @@ export const metadata: Metadata = {
       "Corporate Car Service Dallas Fort Worth | Executive Business Transportation",
     description:
       "Premium corporate car service Dallas Fort Worth. Executive business transportation for meetings, events, and VIP clients.",
-    url: "https://noblelane.com/corporate-car-service",
+    url: "https://gonoblelane.com/corporate-car-service",
     images: [
       {
         url: "/corporate-car-og.jpg",

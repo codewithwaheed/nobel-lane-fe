@@ -21,7 +21,7 @@ export const metadata: Metadata = {
     title: "Private Jet Ground Transportation Dallas | FBO Car Service DFW",
     description:
       "Premium private jet ground transportation Dallas. Professional FBO car service for private jet passengers at DFW area airports.",
-    url: "https://noblelane.com/private-jet-fbo",
+    url: "https://gonoblelane.com/private-jet-fbo",
     images: [
       {
         url: "/private-jet-og.jpg",

@@ -1,5 +1,8 @@
 import { MetadataRoute } from "next";
 
+// Static generation configuration for Cloudflare Pages
+export const dynamic = "force-static";
+
 export default function robots(): MetadataRoute.Robots {
   return {
     rules: {
@@ -7,6 +10,6 @@ export default function robots(): MetadataRoute.Robots {
       allow: "/",
       disallow: ["/private/", "/admin/"],
     },
-    sitemap: "https://noblelane.com/sitemap.xml",
+    sitemap: "https://gonoblelane.com/sitemap.xml",
   };
 }

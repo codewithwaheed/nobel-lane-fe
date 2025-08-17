@@ -22,7 +22,7 @@ export const metadata: Metadata = {
       "Medical Speaker Car Service Dallas | Healthcare Professional Transportation",
     description:
       "Professional medical speaker car service Dallas. Specialized transportation for healthcare professionals, pharmaceutical executives, and medical conference speakers.",
-    url: "https://noblelane.com/medical-speaker-transport",
+    url: "https://gonoblelane.com/speaker-transport",
     images: [
       {
         url: "/medical-speaker-og.jpg",

@@ -72,8 +72,8 @@ const ServiceJsonLd = () => (
         provider: {
           "@type": "Organization",
           name: "Noble Lane Executive Transportation",
-          url: "https://noblelane.com",
-          logo: "https://noblelane.com/logo.png",
+          url: "https://gonoblelane.com",
+          logo: "https://gonoblelane.com/logo.png",
           contactPoint: {
             "@type": "ContactPoint",
             telephone: "+1-214-XXX-XXXX",

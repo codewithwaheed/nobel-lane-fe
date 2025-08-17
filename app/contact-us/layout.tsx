@@ -21,7 +21,7 @@ export const metadata: Metadata = {
     title: "Contact Noble Lane - Book Executive Car Service Dallas",
     description:
       "Ready to experience premium executive transportation? Book executive car service Dallas and schedule luxury transportation with our professional team.",
-    url: "https://noblelane.com/contact-us",
+    url: "https://gonoblelane.com/contact-us",
     images: [
       {
         url: "/contact-og.jpg",
