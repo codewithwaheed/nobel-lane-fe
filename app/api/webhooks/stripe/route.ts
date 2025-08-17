@@ -11,9 +11,9 @@ import {
 } from '@/lib/database-service';
 import { 
   sendBookingConfirmationEmail, 
-  sendPaymentFailureEmail,
-  type BookingEmailData 
+  sendPaymentFailureEmail
 } from '@/lib/email-service';
+import type { BookingEmailData } from '@/lib/email-service';
 import { processBookingPaymentViaEdge } from '@/lib/edge-functions';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
@@ -88,13 +88,10 @@ export async function POST(request: NextRequest) {
 }
 
 async function handlePaymentSuccess(paymentIntent: Stripe.PaymentIntent) {
-  console.log('💰 Payment succeeded:', paymentIntent.id);
   
   try {
-    // Extract comprehensive booking data from metadata
-    const metadata = paymentIntent.metadata;
-    
-    // Prepare data for Edge Function processing
+      // Extract customer email from metadata
+      const metadata = paymentIntent.metadata;    // Prepare data for Edge Function processing
     const bookingPaymentData = {
       paymentIntentId: paymentIntent.id,
       paymentStatus: paymentIntent.status,
@@ -116,6 +113,8 @@ async function handlePaymentSuccess(paymentIntent: Stripe.PaymentIntent) {
       metadata: metadata
     };
 
+    console.log('🚀 Sending to Edge Function with email:', bookingPaymentData.customerEmail);
+
     // Use Edge Function for comprehensive booking processing
     const result = await processBookingPaymentViaEdge(bookingPaymentData);
     
@@ -124,15 +123,12 @@ async function handlePaymentSuccess(paymentIntent: Stripe.PaymentIntent) {
     } else {
       console.error('❌ Edge Function processing failed:', result.error);
       
-      // Fallback to direct processing if Edge Function fails
+      // Fallback to direct processing
       await fallbackBookingProcessing(paymentIntent, metadata);
     }
     
   } catch (error) {
     console.error('❌ Error processing successful payment:', error);
-    
-    // Fallback processing
-    await fallbackBookingProcessing(paymentIntent, paymentIntent.metadata);
   }
 }
 
@@ -197,7 +193,18 @@ async function fallbackBookingProcessing(paymentIntent: Stripe.PaymentIntent, me
       
       if (emailSent) {
         await markConfirmationEmailSent(paymentIntent.id);
-        console.log('✅ Fallback processing completed successfully');
+        // Create booking record and process
+        const result = await processBookingPaymentViaEdge({
+          ...bookingData,
+          paymentIntentId: paymentIntent.id,
+          amount: paymentIntent.amount / 100, // Convert from cents
+          currency: paymentIntent.currency,
+          paymentStatus: 'paid'
+        });
+
+        if (!result.success) {
+          console.error('Failed to process booking after payment:', result.error);
+        }
       }
     }
   } catch (error) {
@@ -223,10 +230,8 @@ async function handlePaymentFailure(paymentIntent: Stripe.PaymentIntent) {
       
       const emailSent = await sendPaymentFailureEmail(emailData);
       
-      if (emailSent) {
-        console.log('📧 Payment failure notification sent');
-      } else {
-        console.error('❌ Failed to send payment failure notification');
+      if (!emailSent) {
+        console.error('Failed to send payment failure notification');
       }
     }
     
@@ -243,9 +248,8 @@ async function handlePaymentCancellation(paymentIntent: Stripe.PaymentIntent) {
     await updateBookingStatus(paymentIntent.id, 'cancelled');
     await updateBookingPaymentStatus(paymentIntent.id, 'canceled');
     
-    console.log('✅ Booking marked as cancelled');
   } catch (error) {
-    console.error('❌ Error handling payment cancellation:', error);
+    console.error('Error handling payment cancellation:', error);
   }
 }
 
@@ -265,7 +269,7 @@ async function handleDispute(dispute: Stripe.Dispute) {
       // - Gather evidence for dispute response
       // - Update internal records
       
-      console.log('📧 Admin team notified of dispute');
+      // Admin notification sent (no need to log in production)
     }
   } catch (error) {
     console.error('❌ Error handling dispute:', error);

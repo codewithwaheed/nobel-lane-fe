@@ -31,6 +31,7 @@ import {
 
 interface PaymentProps {
   bookingData: BookingFormData;
+  user?: any; // Supabase user object
   onPaymentComplete: () => void;
   onBack: () => void;
 }
@@ -38,6 +39,7 @@ interface PaymentProps {
 // Stripe Payment Form Component
 function PaymentForm({
   bookingData,
+  user,
   onPaymentComplete,
   onBack,
 }: PaymentProps) {
@@ -66,6 +68,11 @@ function PaymentForm({
         elements,
         confirmParams: {
           return_url: `${window.location.origin}/booking-confirmation`,
+          payment_method_data: user?.email ? {
+            billing_details: {
+              email: user.email,
+            },
+          } : undefined,
         },
         redirect: "if_required",
       });
@@ -129,7 +136,7 @@ function PaymentForm({
                         fields: {
                           billingDetails: {
                             name: "auto",
-                            email: "auto",
+                            email: user ? "never" : "auto", // Hide email field if user is logged in
                             phone: "auto",
                             address: "auto", // Enable address collection
                           },
@@ -140,6 +147,11 @@ function PaymentForm({
                       }}
                     />
                   </div>
+                  {user && (
+                    <p className="text-xs text-gray-500 mt-2">
+                      Booking confirmation will be sent to: <strong>{user.email}</strong>
+                    </p>
+                  )}
                 </div>
               </div>
 
@@ -344,6 +356,12 @@ export default function Payment(props: PaymentProps) {
   React.useEffect(() => {
     const createPaymentIntent = async () => {
       try {
+        // Use user's email if available, fallback to bookingData email
+        const bookingDataWithEmail = {
+          ...props.bookingData,
+          email: props.user?.email || props.bookingData.email
+        };
+
         const response = await fetch('/api/create-payment-intent', {
           method: 'POST',
           headers: {
@@ -352,7 +370,7 @@ export default function Payment(props: PaymentProps) {
           body: JSON.stringify({
             amount: grandTotal,
             currency: 'usd',
-            bookingData: props.bookingData,
+            bookingData: bookingDataWithEmail,
           }),
         });
 
@@ -376,7 +394,7 @@ export default function Payment(props: PaymentProps) {
     if (grandTotal > 0) {
       createPaymentIntent();
     }
-  }, [grandTotal, props.bookingData]);
+  }, [grandTotal, props.bookingData, props.user]);
 
   // Show error if payment intent creation failed
   if (paymentIntentError) {

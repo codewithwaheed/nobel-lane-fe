@@ -158,35 +158,26 @@ Booking ID: ${data.bookingId} | Payment ID: ${data.paymentIntentId}
 // Mock email service - replace with your actual email provider
 export async function sendBookingConfirmationEmail(data: BookingEmailData): Promise<boolean> {
   try {
-    // TODO: Replace with your actual email service
-    // Example with Resend:
-    /*
-    const resend = new Resend(process.env.RESEND_API_KEY);
+    // Use edge function for sending emails via Gmail
+    const { callSupabaseEdgeFunction } = await import('./edge-functions');
     
-    await resend.emails.send({
-      from: 'Noble Lane Transportation <bookings@gonoblelane.com>',
+    const result = await callSupabaseEdgeFunction('send-email', {
       to: data.customerEmail,
-      subject: `Booking Confirmed - ${data.confirmationNumber}`,
-      html: generateBookingConfirmationHTML(data),
-      text: generateBookingConfirmationText(data),
+      subject: `Booking Confirmed - Noble Lane Transportation (${data.confirmationNumber})`,
+      type: 'booking-confirmation',
+      customerName: data.customerName || 'Valued Customer',
+      bookingId: data.bookingId,
+      pickupAddress: data.pickupAddress,
+      destinationAddress: data.destinationAddress,
+      pickupDate: data.pickupDate,
+      pickupTime: data.pickupTime,
+      passengers: data.passengers,
+      vehicleName: data.vehicleName,
+      totalAmount: data.totalAmount,
+      confirmationNumber: data.confirmationNumber
     });
-    */
 
-    // Example with SendGrid:
-    /*
-    const sgMail = require('@sendgrid/mail');
-    sgMail.setApiKey(process.env.SENDGRID_API_KEY);
-    
-    await sgMail.send({
-      to: data.customerEmail,
-      from: 'bookings@gonoblelane.com',
-      subject: `Booking Confirmed - ${data.confirmationNumber}`,
-      html: generateBookingConfirmationHTML(data),
-      text: generateBookingConfirmationText(data),
-    });
-    */
-
-    return true;
+    return result.success;
   } catch (error) {
     console.error('❌ Failed to send booking confirmation email:', error);
     return false;
@@ -195,44 +186,70 @@ export async function sendBookingConfirmationEmail(data: BookingEmailData): Prom
 
 export async function sendPaymentFailureEmail(data: PaymentFailureEmailData): Promise<boolean> {
   try {
-    console.log('📧 Sending payment failure notification to:', data.customerEmail);
+    const { callSupabaseEdgeFunction } = await import('./edge-functions');
     
-    const subject = 'Payment Failed - Noble Lane Transportation';
-    const htmlContent = `
-      <html>
-      <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
-        <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
-          <div style="background: #fee2e2; color: #991b1b; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-            <h2>❌ Payment Failed</h2>
-            <p>We were unable to process your payment for your Noble Lane Transportation booking.</p>
-          </div>
-          
-          <div style="background: #ffffff; padding: 20px; border: 1px solid #e5e7eb; border-radius: 8px;">
-            <h3>Payment Details:</h3>
-            <p><strong>Payment ID:</strong> ${data.paymentIntentId}</p>
-            <p><strong>Amount:</strong> $${data.amount.toFixed(2)}</p>
-            ${data.failureReason ? `<p><strong>Reason:</strong> ${data.failureReason}</p>` : ''}
-            
-            <h3>What to do next:</h3>
-            <ul>
-              <li>Please try booking again with a different payment method</li>
-              <li>Check with your bank if your card was declined</li>
-              <li>Contact us for assistance: (214) 225-0105</li>
-            </ul>
-          </div>
-          
-          <div style="text-align: center; margin-top: 20px;">
-            <p>Noble Lane Transportation | (214) 225-0105 | info@gonoblelane.com</p>
-          </div>
-        </div>
-      </body>
-      </html>
-    `;
+    const result = await callSupabaseEdgeFunction('send-email', {
+      type: 'custom',
+      customerEmail: data.customerEmail,
+      customerName: 'Valued Customer',
+      subject: 'Payment Failed - Noble Lane Transportation',
+      customHtml: `
+        <html>
+        <head>
+            <meta charset="utf-8">
+            <title>Payment Failed - Noble Lane Transportation</title>
+            <style>
+                body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+                .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+                .header { background: linear-gradient(135deg, #dc2626, #b91c1c); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
+                .content { background: #ffffff; padding: 30px; border: 1px solid #e5e7eb; }
+                .footer { background: #f9fafb; padding: 20px; text-align: center; border-radius: 0 0 8px 8px; border: 1px solid #e5e7eb; border-top: none; }
+                .error-details { background: #fee2e2; padding: 20px; border-radius: 6px; margin: 20px 0; border-left: 4px solid #dc2626; }
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="header">
+                    <h1>❌ Payment Failed</h1>
+                    <p>Noble Lane Transportation</p>
+                </div>
+                
+                <div class="content">
+                    <h2>Dear Valued Customer,</h2>
+                    
+                    <p>We were unable to process your payment for your Noble Lane Transportation booking.</p>
+                    
+                    <div class="error-details">
+                        <h3>Payment Details:</h3>
+                        <p><strong>Payment ID:</strong> ${data.paymentIntentId}</p>
+                        <p><strong>Amount:</strong> $${data.amount.toFixed(2)}</p>
+                        ${data.failureReason ? `<p><strong>Reason:</strong> ${data.failureReason}</p>` : ''}
+                    </div>
+                    
+                    <h3>What to do next:</h3>
+                    <ul>
+                        <li>Please try booking again with a different payment method</li>
+                        <li>Check with your bank if your card was declined</li>
+                        <li>Contact us for immediate assistance: (214) 225-0105</li>
+                    </ul>
+                    
+                    <p>We apologize for any inconvenience and look forward to serving you.</p>
+                    
+                    <p>Best regards,<br>
+                    <strong>The Noble Lane Team</strong></p>
+                </div>
+                
+                <div class="footer">
+                    <p>Noble Lane Executive Transport | Dallas-Fort Worth Area</p>
+                    <p>📞 (214) 225-0105 | 📧 info@gonoblelane.com</p>
+                </div>
+            </div>
+        </body>
+        </html>
+      `
+    });
 
-    // TODO: Replace with your actual email service
-    console.log('Payment failure email content:', { subject, htmlContent });
-    
-    return true;
+    return result.success;
   } catch (error) {
     console.error('❌ Failed to send payment failure email:', error);
     return false;

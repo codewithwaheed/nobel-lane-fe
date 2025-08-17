@@ -9,30 +9,30 @@ export async function callSupabaseEdgeFunction(
   functionName: string, 
   data: any
 ): Promise<EdgeFunctionResponse> {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!supabaseUrl || !serviceRoleKey) {
+    throw new Error('Supabase configuration missing');
+  }
+
+  const { createClient } = await import('@supabase/supabase-js');
+  const supabase = createClient(supabaseUrl, serviceRoleKey);
+
   try {
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-    if (!supabaseUrl || !serviceRoleKey) {
-      throw new Error('Supabase configuration missing');
-    }
-
-    const response = await fetch(`${supabaseUrl}/functions/v1/${functionName}`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${serviceRoleKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(data)
+    const response = await supabase.functions.invoke(functionName, {
+      body: data
     });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Edge Function call failed: ${response.status} - ${errorText}`);
+    if (response.error) {
+      console.error(`Edge Function ${functionName} error:`, response.error);
+      throw response.error;
     }
 
-    const result = await response.json();
-    return { success: true, data: result };
+    return {
+      success: true,
+      data: response.data
+    };
 
   } catch (error) {
     console.error(`Error calling Edge Function ${functionName}:`, error);
@@ -48,7 +48,12 @@ export async function processBookingPaymentViaEdge(bookingData: any): Promise<Ed
   return callSupabaseEdgeFunction('process-booking-payment', bookingData);
 }
 
-// Specific function for sending booking confirmations
-export async function sendBookingConfirmationViaEdge(emailData: any): Promise<EdgeFunctionResponse> {
-  return callSupabaseEdgeFunction('send-booking-confirmation', emailData);
+// Specific function for processing quote requests
+export async function processQuoteRequestViaEdge(quoteData: any): Promise<EdgeFunctionResponse> {
+  return callSupabaseEdgeFunction('process-quote-request', quoteData);
+}
+
+// Specific function for sending SMS notifications
+export async function sendSMSNotificationViaEdge(smsData: any): Promise<EdgeFunctionResponse> {
+  return callSupabaseEdgeFunction('send-sms-notification', smsData);
 }

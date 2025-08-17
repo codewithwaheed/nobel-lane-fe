@@ -228,10 +228,12 @@ export default function BookingWizard({
           />
         );
       case "Pickup Info":
+      case "Contact":
         return (
           <AdditionalInfo
             isQuote={isQuote}
             bookingData={bookingData}
+            user={user}
             onSubmit={handleAdditionalInfoSubmit}
             onBack={handleBack}
           />
@@ -262,6 +264,7 @@ export default function BookingWizard({
         return (
           <Payment
             bookingData={bookingData}
+            user={user}
             onPaymentComplete={handlePaymentComplete}
             onBack={handleBack}
           />

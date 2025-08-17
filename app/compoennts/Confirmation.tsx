@@ -26,6 +26,7 @@ interface ConfirmationProps {
     email?: string;
     flightNumber?: string;
     notes?: string;
+    confirmationNumber?: string;
   };
   onStartNew: () => void;
 }
@@ -60,6 +61,21 @@ export default function Confirmation({
           </h3>
 
           <div className="space-y-4">
+            {/* Confirmation Number - show if available */}
+            {bookingData.confirmationNumber && (
+              <div className="flex items-start gap-3">
+                <CheckCircle className="w-5 h-5 text-amber-500 mt-0.5" />
+                <div>
+                  <div className="font-medium text-gray-900">
+                    {isQuote ? "Reference Number" : "Confirmation Number"}
+                  </div>
+                  <div className="font-semibold text-amber-600">
+                    {bookingData.confirmationNumber}
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Trip Details */}
             <div className="flex items-start gap-3">
               <MapPin className="w-5 h-5 text-amber-500 mt-0.5" />

@@ -46,10 +46,8 @@ serve(async (req: Request) => {
     }
 
     const { input, sessionToken, country = "us" } = requestData;
-    console.log("Request payload:", { input, sessionToken, country });
 
     if (!input || typeof input !== "string") {
-      console.log("Invalid input:", input);
       return new Response(JSON.stringify({ error: "'input' is required" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -89,15 +87,12 @@ serve(async (req: Request) => {
     );
 
     const res = await fetch(url);
-    console.log("Google API response status:", res.status);
 
     const data = await res.json();
-    console.log("Google API response data:", JSON.stringify(data, null, 2));
 
     const response = {
       predictions: Array.isArray(data?.predictions) ? data.predictions : [],
     };
-    console.log("Returning response:", JSON.stringify(response, null, 2));
 
     return new Response(
       JSON.stringify(response),

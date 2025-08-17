@@ -43,9 +43,44 @@ export interface BookingData {
   bookingSource?: string;
 }
 
+export interface QuoteData {
+  // User information
+  userId?: string;
+  customerEmail: string;
+  customerPhone?: string;
+  customerFirstName?: string;
+  customerLastName?: string;
+  customerCompany?: string;
+
+  // Trip details
+  pickupAddress: string;
+  destinationAddress?: string;
+  pickupDate: string;
+  pickupTime: string;
+  passengers: number;
+  flightNumber?: string;
+  specialInstructions?: string;
+
+  // Vehicle and pricing
+  vehicleType: string;
+  vehicleName: string;
+  basePrice: number;
+  extraStopsRequired?: boolean;
+  extraStopsCount?: number;
+
+  // Quote metadata
+  bookingSource?: string;
+}
+
 export interface CreateBookingResult {
   success: boolean;
   booking?: any;
+  error?: string;
+}
+
+export interface CreateQuoteResult {
+  success: boolean;
+  quote?: any;
   error?: string;
 }
 
@@ -112,8 +147,6 @@ export async function updateBookingPaymentStatus(
   status: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    console.log(`📝 Updating payment status for ${paymentIntentId} to ${status}`);
-
     const { error } = await supabaseAdmin
       .from('bookings')
       .update({ 
@@ -123,11 +156,10 @@ export async function updateBookingPaymentStatus(
       .eq('stripe_payment_intent_id', paymentIntentId);
 
     if (error) {
-      console.error('❌ Database error updating payment status:', error);
+      console.error('Failed to update payment status:', error);
       return { success: false, error: error.message };
     }
 
-    console.log('✅ Payment status updated successfully');
     return { success: true };
 
   } catch (error) {
@@ -196,5 +228,63 @@ export async function markConfirmationEmailSent(paymentIntentId: string): Promis
       .eq('stripe_payment_intent_id', paymentIntentId);
   } catch (error) {
     console.error('❌ Error marking confirmation email as sent:', error);
+  }
+}
+
+export async function createQuoteRecord(data: QuoteData): Promise<CreateQuoteResult> {
+  try {
+    const quoteRecord = {
+      // User information
+      user_id: data.userId || null,
+      customer_email: data.customerEmail,
+      customer_phone: data.customerPhone || null,
+      customer_first_name: data.customerFirstName || null,
+      customer_last_name: data.customerLastName || null,
+      customer_company: data.customerCompany || null,
+
+      // Trip details
+      pickup_address: data.pickupAddress,
+      destination_address: data.destinationAddress || null,
+      pickup_date: data.pickupDate,
+      pickup_time: data.pickupTime,
+      passengers: data.passengers,
+      flight_number: data.flightNumber || null,
+      special_instructions: data.specialInstructions || null,
+
+      // Vehicle and pricing
+      vehicle_type: data.vehicleType,
+      vehicle_name: data.vehicleName,
+      base_price: data.basePrice,
+      service_fee: 0, // No service fee for quotes
+      total_amount: 0, // Will be calculated when quote is provided
+
+      // Payment information (placeholder for quotes)
+      stripe_payment_intent_id: `quote_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      stripe_payment_status: 'quote_pending',
+      payment_method: 'quote',
+      currency: 'usd',
+
+      // Booking status
+      booking_status: 'pending',
+      booking_type: 'quote',
+      booking_source: data.bookingSource || 'website',
+    };
+
+    const { data: quote, error } = await supabaseAdmin
+      .from('bookings')
+      .insert(quoteRecord)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('❌ Database error creating quote:', error);
+      return { success: false, error: error.message };
+    }
+
+    return { success: true, quote };
+
+  } catch (error) {
+    console.error('❌ Error creating quote record:', error);
+    return { success: false, error: 'Failed to create quote record' };
   }
 }

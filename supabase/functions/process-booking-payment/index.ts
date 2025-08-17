@@ -1,7 +1,13 @@
 // Supabase Edge Function: process-booking-payment
 // This handles the complete booking processing workflow
 
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+import { serve }    }
+    // Optional: Send SMS notification
+    if (bookingData.customerPhone) {
+      // SMS functionality would be implemented here
+    }st emailSent = emailResponse.ok;
+
+    // Optional: Send SMS notificationm "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const corsHeaders = {
@@ -43,7 +49,18 @@ serve(async (req) => {
 
     const bookingData: BookingPaymentData = await req.json()
 
-    // 1. Create booking record in database
+    // 🔍 DEBUG: Log incoming booking data
+    try {
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    // Validate email presence
+    if (!bookingData.customerEmail || bookingData.customerEmail.trim() === '') {
+      console.error('CRITICAL: No customer email provided!');
+      throw new Error('Customer email is required for booking confirmation');
+    }
+
+    // Create booking record in database
     const { data: booking, error: bookingError } = await supabaseClient
       .from('bookings')
       .insert({
@@ -72,50 +89,72 @@ serve(async (req) => {
       .single()
 
     if (bookingError) {
+      console.error('Database error creating booking:', bookingError);
       throw new Error(`Database error: ${bookingError.message}`)
     }
 
-    // 2. Generate confirmation number
+    // Generate confirmation number
     const confirmationNumber = `NL-${booking.id.slice(0, 8).toUpperCase()}`
 
-    // 3. Send confirmation email via Edge Function
-    const emailResponse = await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/send-booking-confirmation`, {
+    // Send confirmation email via Edge Function
+    
+    const emailPayload = {
+      to: bookingData.customerEmail,
+      subject: `Booking Confirmed - Noble Lane Transportation (${confirmationNumber})`,
+      type: 'booking-confirmation',
+      customerName: 'Valued Customer',
+      customerEmail: bookingData.customerEmail,
+      bookingId: booking.id,
+      pickupAddress: bookingData.pickupAddress,
+      destinationAddress: bookingData.destinationAddress,
+      pickupDate: new Date(bookingData.pickupDate).toLocaleDateString(),
+      pickupTime: bookingData.pickupTime,
+      passengers: bookingData.passengers,
+      vehicleName: bookingData.vehicleName,
+      totalAmount: bookingData.totalAmount,
+      confirmationNumber
+    };
+    
+    const emailResponse = await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/send-email`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        bookingId: booking.id,
-        customerEmail: bookingData.customerEmail,
-        customerName: 'Valued Customer', // We'll improve this when we collect names
-        pickupAddress: bookingData.pickupAddress,
-        destinationAddress: bookingData.destinationAddress,
-        pickupDate: new Date(bookingData.pickupDate).toLocaleDateString(),
-        pickupTime: bookingData.pickupTime,
-        passengers: bookingData.passengers,
-        vehicleName: bookingData.vehicleName,
-        totalAmount: bookingData.totalAmount,
-        confirmationNumber
-      })
+      body: JSON.stringify(emailPayload)
     })
+    
+    let emailResponseData;
+    try {
+      emailResponseData = await emailResponse.json();
+    } catch (e) {
+      // Email service response was not JSON
+    }
+    }
+
+    const emailSent = emailResponse.ok;
+    console.log(`📧 Email sent successfully: ${emailSent ? '✅ YES' : '❌ NO'}`);
 
     // 4. Optional: Send SMS notification
     if (bookingData.customerPhone) {
+      console.log('📱 SMS would be sent to:', bookingData.customerPhone);
       // Implement SMS sending here using Twilio or similar
-      console.log('SMS notification would be sent to:', bookingData.customerPhone)
+    } else {
+      console.log('📱 No phone number provided for SMS');
     }
 
     // 5. Optional: Notify dispatch system
     // You can add webhook calls to your dispatch system here
 
+    const finalResult = { 
+      success: true, 
+      bookingId: booking.id,
+      confirmationNumber,
+      emailSent: emailSent
+    };
+
     return new Response(
-      JSON.stringify({ 
-        success: true, 
-        bookingId: booking.id,
-        confirmationNumber,
-        emailSent: emailResponse.ok
-      }),
+      JSON.stringify(finalResult),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200 

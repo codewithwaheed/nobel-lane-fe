@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -14,12 +14,14 @@ import {
   Plus,
 } from "lucide-react";
 import type { BookingFormData } from "@/lib/booking-storage";
+import type { User } from '@supabase/supabase-js';
 
 interface AdditionalInfoProps {
   isQuote: boolean;
   bookingData: BookingFormData;
   onSubmit: (data: Partial<BookingFormData>) => void;
   onBack: () => void;
+  user?: User | null;
 }
 
 export default function AdditionalInfo({
@@ -27,6 +29,7 @@ export default function AdditionalInfo({
   bookingData,
   onSubmit,
   onBack,
+  user,
 }: AdditionalInfoProps) {
   const [formData, setFormData] = useState({
     flightNumber: bookingData.flightNumber || "",
@@ -38,6 +41,13 @@ export default function AdditionalInfo({
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  // Auto-populate email for logged-in users
+  useEffect(() => {
+    if (user && user.email && !formData.email) {
+      setFormData(prev => ({ ...prev, email: user.email || "" }));
+    }
+  }, [user, formData.email]);
 
   const handleChange = (field: string, value: string | boolean | number) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -155,10 +165,16 @@ export default function AdditionalInfo({
                             ? "border-red-500 focus:border-red-500"
                             : "focus:border-amber-500"
                         }`}
+                        readOnly={user && user.email ? true : false}
                       />
                       {errors.email && (
                         <p className="text-sm text-red-500 mt-1">
                           {errors.email}
+                        </p>
+                      )}
+                      {user && user.email && (
+                        <p className="text-xs text-green-600 mt-1">
+                          Using your account email
                         </p>
                       )}
                     </div>

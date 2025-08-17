@@ -36,6 +36,10 @@ export interface BookingFormData {
   extraStopsRequired?: boolean;
   extraStopsCount?: number;
 
+  // Quote specific fields
+  quoteSubmitted?: boolean;
+  confirmationNumber?: string;
+
   // Place details (optional, set when using autocomplete)
   fromPlaceId?: string;
   toPlaceId?: string;

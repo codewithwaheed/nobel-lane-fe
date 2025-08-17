@@ -134,8 +134,6 @@ export default function AddressAutocomplete({
         }
       );
 
-      console.log("✅ Autocomplete created with establishment + geocode types");
-
       // Add place changed listener
       autocompleteRef.current.addListener("place_changed", async () => {
         const place = autocompleteRef.current?.getPlace();
