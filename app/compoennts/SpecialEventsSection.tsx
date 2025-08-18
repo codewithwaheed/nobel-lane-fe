@@ -77,7 +77,7 @@ const SpecialEventsSection: React.FC = () => {
           {/* Header */}
           <div className="text-center mb-16">
             <h2 className="text-2xl md:text-4xl font-bold text-gray-900 dark:text-white mb-6">
-              Premium Events & Executive Aviation Transportation
+              Premium Events &amp; Executive Aviation Transportation
             </h2>
             <p className="text-gray-600 dark:text-gray-400 md:text-xl max-w-3xl mx-auto leading-relaxed">
               Elevate your most important occasions with our exclusive

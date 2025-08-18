@@ -51,6 +51,8 @@ interface VehicleSelectionProps {
   onPricingStatus?: (s: { loading: boolean; hasAnyPricing: boolean }) => void;
   // Add flag to indicate if we're in quote flow (to hide pricing display)
   isQuoteFlow?: boolean;
+  // Track if quote is explicit (show pricing) or auto-fallback (skip pricing)
+  quoteOrigin?: "explicit" | "auto-fallback";
 
   // pricing inputs
   tripData?: {
@@ -85,6 +87,7 @@ export default function VehicleSelection({
   canGoPrevious = true,
   onPricingStatus,
   isQuoteFlow = false,
+  quoteOrigin,
   tripData,
 }: VehicleSelectionProps) {
   const [pricing, setPricing] = useState<PricingResponse | null>(null);
@@ -134,6 +137,7 @@ export default function VehicleSelection({
       duration,
       isQuoteFlow,
       tripData,
+      quoteOrigin,
     });
 
     if (!from) {
@@ -142,12 +146,11 @@ export default function VehicleSelection({
       return;
     }
 
-    // Skip pricing fetch for quote flows
-    if (isQuoteFlow) {
-      console.log("Quote flow detected - skipping pricing fetch");
-      onPricingStatus?.({ loading: false, hasAnyPricing: false });
-      return;
-    }
+    // Always try to fetch pricing for all flows (booking, explicit quotes, auto-fallback quotes)
+    // The BookingWizard will handle flow conversion based on pricing availability
+    console.log(
+      "Fetching pricing for all flows - let wizard handle flow conversion"
+    );
 
     console.log("Starting pricing fetch...");
 
@@ -434,7 +437,7 @@ export default function VehicleSelection({
             tripData?.type === "by-the-hour";
 
           // Show pricing only if not in quote flow AND pricing exists
-          const shouldShowPricing = showPricing && v.hasPricing && p;
+          const shouldShowPricing = !!(showPricing && v.hasPricing && p);
 
           console.log("Vehicle pricing check:", {
             vehicleId: v.id,
@@ -492,7 +495,7 @@ export default function VehicleSelection({
                       {v.name}
                     </h4>
 
-                    {/* Price block - only show if should show pricing */}
+                    {/* Single Price block - only show if should show pricing */}
                     {shouldShowPricing && (
                       <div className="flex flex-col items-end shrink-0">
                         <div className="inline-flex items-center gap-1">
@@ -548,11 +551,8 @@ export default function VehicleSelection({
                     </div>
                   </div>
 
-                  {/* Contact for pricing for quote flows or if no pricing available */}
-                  {(isQuoteFlow ||
-                    (showPricing &&
-                      !pricingLoading &&
-                      (!v.hasPricing || !p))) && (
+                  {/* Contact for pricing - only show when pricing is NOT available */}
+                  {!shouldShowPricing && showPricing && !pricingLoading && (
                     <div className="mt-3 text-xs text-amber-600 font-medium flex items-center justify-center gap-1">
                       <Phone className="w-3 h-3" />
                       Contact for pricing

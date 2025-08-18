@@ -44,7 +44,7 @@ const FormSchema = z
     to: z.string().optional(),
     toZipcode: z.string().optional(), // Add ZIP code field
     duration: z.string().optional(),
-    date: z.date().min(new Date(), {
+    date: z.date().min(new Date().setHours(0, 0, 0, 0), {
       message: "Date must be in the future.",
     }),
     time: z.string().min(1, {
@@ -127,7 +127,10 @@ const timeSlots = [
 
 // Duration options - same as TripDetails
 const durationOptions = Array.from({ length: 24 }, (_, i) => i + 1);
-
+const today = new Date();
+today.setHours(0, 0, 0, 0);
+const defaultDate = new Date(today);
+defaultDate.setDate(defaultDate.getDate() + 1);
 export function BookingForm({ isModal = false }: { isModal?: boolean }) {
   const router = useRouter();
   const form = useForm<z.infer<typeof FormSchema>>({
@@ -139,7 +142,7 @@ export function BookingForm({ isModal = false }: { isModal?: boolean }) {
       to: "",
       toZipcode: "",
       duration: "",
-      date: new Date(),
+      date: defaultDate,
       time: "",
     },
   });
@@ -314,7 +317,7 @@ export function BookingForm({ isModal = false }: { isModal?: boolean }) {
                 <FormLabel>Duration (Hours)</FormLabel>
                 <FormControl>
                   <Select value={field.value} onValueChange={field.onChange}>
-                    <SelectTrigger className="bg-white h-10">
+                    <SelectTrigger className="bg-white h-10 w-full">
                       <SelectValue placeholder="Select duration" />
                     </SelectTrigger>
                     <SelectContent>

@@ -15,7 +15,7 @@ import {
 export default function Footer() {
   const { setIsBookingModalOpen } = useBooking();
   return (
-    <footer className="bg-gray-800 dark:bg-gray-900">
+    <footer className="bg-gray-800 dark:bg-gray-900" role="contentinfo">
       <div className="w-full max-w-screen-xl mx-auto p-4 md:py-8">
         <div className="sm:flex sm:items-center sm:justify-between">
           <Link

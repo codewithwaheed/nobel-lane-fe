@@ -79,6 +79,7 @@ export default function BookingWizard({
       submittedAt: "",
       passengers: 1,
       isQuote: correctIsQuote,
+      quoteOrigin: urlType === "quote" ? "explicit" : undefined, // Track if this is an explicit quote request
       currentStep: 1,
       completedSteps: [],
     };
@@ -277,26 +278,29 @@ export default function BookingWizard({
 
   // When pricing status changes, update the flow accordingly
   useEffect(() => {
-    // Don't interfere with URL-based flows - respect explicit URLs
+    // Don't interfere with URL-based flows - respect explicit quote URLs
     const urlParams = new URLSearchParams(window.location.search);
     const urlType = urlParams.get("type");
 
-    // For explicit URLs, don't auto-switch flows
-    if (urlType === "quote") return; // Explicit quote URL
-    if (!urlType) return; // Explicit booking URL (/book-now without params)
+    // For explicit quote URLs, don't auto-convert (they should stay as quote flow regardless of pricing)
+    if (urlType === "quote") return; // Explicit quote URL - always stays quote flow
 
+    // Only auto-convert booking flows (/book-now without params or with other params)
     if (currentStepName === "Service") {
       if (hasAnyPricing && !pricingLoading) {
-        // Pricing is available - ensure we're in booking flow
+        // Pricing is available - ensure we're in booking flow (undo any previous auto-conversion)
         if (forceQuoteFlow) {
           setForceQuoteFlow(false);
           updateBookingDataState({ isQuote: false });
         }
       } else if (!pricingLoading && !hasAnyPricing) {
-        // No pricing available - switch to quote flow
+        // No pricing available - auto-convert booking flow to quote flow
         if (!bookingData.isQuote && !forceQuoteFlow) {
           setForceQuoteFlow(true);
-          updateBookingDataState({ isQuote: true });
+          updateBookingDataState({
+            isQuote: true,
+            quoteOrigin: "auto-fallback", // Mark as auto-converted due to no pricing
+          });
         }
       }
     }
@@ -482,6 +486,7 @@ export default function BookingWizard({
             onVehicleSelect={handleVehicleSelect}
             showPricing={true} // Always show pricing UI, but VehicleSelection will handle display logic
             isQuoteFlow={bookingData.isQuote || forceQuoteFlow}
+            quoteOrigin={bookingData.quoteOrigin}
             onNext={handleNext}
             onPrevious={handleBack}
             canGoNext={!!bookingData.selectedVehicle}

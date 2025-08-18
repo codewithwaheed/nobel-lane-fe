@@ -1,6 +1,6 @@
 "use client";
 import * as React from "react";
-
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { useBooking } from "../contexts/BookingContext";
 
@@ -10,11 +10,21 @@ export default function HeroSection() {
   return (
     <div
       className="min-h-[550px] md:min-h-[650px] bg-cover bg-center bg-no-repeat relative"
-      style={{
-        backgroundImage:
-          "url('/images/noble-lane-executive-airport-transportF.webp')",
-      }}
+      // style={{
+      //   backgroundImage:
+      //     "url('/images/noble-lane-executive-airport-transportF.webp')",
+      // }}
     >
+      <Image
+        src="/images/noble-lane-executive-airport-transportF.webp"
+        alt="Noble Lane luxury vehicles at Dallas airport"
+        fill
+        priority
+        style={{
+          objectFit: "cover",
+        }}
+        sizes="100vw"
+      />
       {/* Dark overlay for better text readability */}
       <div className="absolute inset-0 bg-black/40"></div>
 

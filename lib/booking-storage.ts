@@ -29,6 +29,7 @@ export interface BookingFormData {
   phone?: string;
   email?: string;
   isQuote: boolean;
+  quoteOrigin?: "explicit" | "auto-fallback"; // Track if quote was explicitly requested or auto-converted due to no pricing
   currentStep: number;
   completedSteps: number[];
 

@@ -26,6 +26,10 @@ interface TripDetailsProps {
   bookingData: BookingFormData;
   onSubmit: (data: Partial<BookingFormData>) => void;
 }
+const today = new Date();
+today.setHours(0, 0, 0, 0);
+const defaultDate = new Date(today);
+defaultDate.setDate(defaultDate.getDate() + 1);
 
 export default function TripDetails({
   bookingData,
@@ -36,7 +40,7 @@ export default function TripDetails({
     from: bookingData.from || "",
     to: bookingData.to || "",
     duration: bookingData.duration || "",
-    date: bookingData.date ? new Date(bookingData.date) : (null as Date | null),
+    date: bookingData.date ? new Date(bookingData.date) : defaultDate,
     time: bookingData.time || "",
     passengers: bookingData.passengers || 1,
     fromPlaceId: bookingData.fromPlaceId,
