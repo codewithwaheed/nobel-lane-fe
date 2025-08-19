@@ -1,6 +1,14 @@
 "use client";
 
-import { useEffect, useState, useCallback, useMemo, Suspense } from "react";
+import {
+  useEffect,
+  useState,
+  useCallback,
+  useMemo,
+  Suspense,
+  useRef,
+} from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import WizardProgress from "./WizardProgress";
 import TripDetails from "./TripDetails";
@@ -59,11 +67,13 @@ export default function BookingWizard({
     // Read URL parameters for pre-filled data
     const urlParams = new URLSearchParams(window.location.search);
     const urlType = urlParams.get("type");
+    const quoteId = urlParams.get("quoteId"); // Check for quote ID parameter
     const correctIsQuote = urlType === "quote" || isQuote;
     const isPrefilled = urlParams.get("prefilled") === "true";
 
     console.log("Starting fresh - checking URL parameters:", {
       urlType,
+      quoteId,
       correctIsQuote,
       isPrefilled,
       allParams: Object.fromEntries(urlParams.entries()),
@@ -115,6 +125,9 @@ export default function BookingWizard({
   });
 
   const [user, setUser] = useState<User | null>(null);
+  const [isLoadingQuote, setIsLoadingQuote] = useState(false); // Loading state for quote fetching
+  const quoteFetchedRef = useRef<string | null>(null); // Track which quote ID has been fetched to prevent duplicates
+  const router = useRouter(); // For navigation
   const [currentStep, setCurrentStep] = useState(() => {
     // Check if we're on the client side to avoid SSR issues
     if (typeof window === "undefined") {
@@ -208,6 +221,185 @@ export default function BookingWizard({
       }
     }
   }, [bookingData.isQuote, forceQuoteFlow]); // Include dependencies
+
+  // Handle quote pre-filling from URL quoteId parameter
+  useEffect(() => {
+    const fetchQuoteDetails = async (quoteId: string) => {
+      // Prevent duplicate calls
+      if (quoteFetchedRef.current === quoteId || isLoadingQuote) {
+        console.log("Quote fetch prevented - already processing:", quoteId);
+        return;
+      }
+
+      // Also prevent if we already have quote data loaded
+      if (
+        bookingData.from &&
+        bookingData.date &&
+        bookingData.time &&
+        quoteFetchedRef.current
+      ) {
+        console.log("Quote data already loaded, skipping fetch");
+        return;
+      }
+
+      try {
+        quoteFetchedRef.current = quoteId; // Mark this quote as being fetched
+        setIsLoadingQuote(true); // Start loading
+        console.log("Fetching quote details for ID:", quoteId);
+
+        const { getCleanSupabaseUrl, getSupabaseAnonKey } = await import(
+          "@/lib/supabase-env"
+        );
+        const supabaseUrl = getCleanSupabaseUrl();
+        const supabaseKey = getSupabaseAnonKey();
+
+        if (!supabaseUrl || !supabaseKey) {
+          throw new Error("Supabase configuration missing");
+        }
+
+        // Use the correct Supabase Edge Functions endpoint with GET request
+        const response = await fetch(
+          `${supabaseUrl}/functions/v1/get-quote-details?quoteId=${encodeURIComponent(
+            quoteId
+          )}`,
+          {
+            method: "GET", // Use GET as the function expects GET
+            headers: {
+              Authorization: `Bearer ${supabaseKey}`,
+              apikey: supabaseKey,
+            },
+          }
+        );
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(
+            `Failed to fetch quote (${response.status}): ${errorText}`
+          );
+        }
+
+        const result = await response.json();
+        console.log("Quote fetch result:", result);
+
+        if (!result.success || !result.data) {
+          throw new Error(result.error || "Quote not found");
+        }
+
+        const quoteData = result.data;
+        console.log("Quote data received:", quoteData);
+
+        // Convert 24-hour time format to 12-hour AM/PM format for the form
+        const convertTo12HourFormat = (time24: string): string => {
+          if (!time24) return "";
+
+          // Parse time like "02:30:00" or "14:30:00"
+          const [hours, minutes] = time24.split(":");
+          const hour24 = parseInt(hours, 10);
+          const hour12 = hour24 === 0 ? 12 : hour24 > 12 ? hour24 - 12 : hour24;
+          const ampm = hour24 >= 12 ? "PM" : "AM";
+
+          return `${hour12}:${minutes} ${ampm}`;
+        };
+
+        // Convert database trip_type back to frontend format
+        const convertTripTypeToFrontend = (
+          dbTripType: string
+        ): "one-way" | "by-the-hour" => {
+          switch (dbTripType) {
+            case "hourly":
+              return "by-the-hour";
+            case "one-way":
+              return "one-way";
+            default:
+              return "one-way"; // Default fallback
+          }
+        };
+
+        // Transform quote data to BookingFormData format
+        const transformedData: Partial<BookingFormData> = {
+          type: convertTripTypeToFrontend(quoteData.trip_type || "one-way"),
+          from: quoteData.pickup_location || "",
+          fromZipcode: quoteData.pickup_zipcode || "",
+          to: quoteData.dropoff_location || "",
+          toZipcode:
+            quoteData.destination_zipcode || quoteData.pickup_zipcode || "", // Fallback to pickup zipcode if dropoff not available
+          duration: quoteData.duration || undefined,
+          date: quoteData.pickup_date || "",
+          // Convert 24-hour time to 12-hour AM/PM format to match time slots
+          time: convertTo12HourFormat(quoteData.pickup_time || ""),
+          passengers: quoteData.passengers || 1,
+          // Vehicle selection from quote - create VehicleOption object
+          selectedVehicle: quoteData.vehicle_type
+            ? {
+                id: parseInt(quoteData.vehicle_type) || 0,
+                name: quoteData.vehicle_name || "",
+                vehicleId: quoteData.vehicle_type || "",
+                image: "", // Will be populated by VehicleSelection component
+                passengers: 0, // Will be populated by VehicleSelection component
+                bags: 0, // Will be populated by VehicleSelection component
+                price: 0, // Will be populated by VehicleSelection component
+                description: "", // Will be populated by VehicleSelection component
+              }
+            : undefined,
+          // Customer info
+          phone: quoteData.customer_phone || "",
+          email: quoteData.customer_email || "",
+          // Set as booking flow (not quote) since user is converting to booking
+          isQuote: false,
+          currentStep: 2, // Always go to vehicle selection step so user can see/change the pre-selected vehicle
+        };
+
+        console.log("Transformed quote data:", transformedData);
+        console.log("Email field value:", transformedData.email);
+        console.log("From field value:", transformedData.from);
+        console.log("Original quote data email:", quoteData.customer_email);
+        console.log("Original quote data pickup:", quoteData.pickup_location);
+
+        // Update booking data with quote details
+        setBookingData((prev) => ({
+          ...prev,
+          ...transformedData,
+        }));
+
+        // Advance to the appropriate step based on available data
+        const targetStep = transformedData.currentStep || 2;
+        console.log(
+          `Quote pre-filled, advancing to step ${targetStep} ${
+            targetStep === 3
+              ? "(additional info - vehicle already selected)"
+              : "(vehicle selection)"
+          }`
+        );
+        setCurrentStep(targetStep);
+      } catch (error) {
+        console.error("Error fetching quote details:", error);
+        // Show error message but don't break the flow - user can still use wizard normally
+        alert(
+          `Error loading quote details: ${
+            error instanceof Error ? error.message : "Unknown error"
+          }. You can still proceed with normal booking.`
+        );
+      } finally {
+        setIsLoadingQuote(false); // Stop loading
+      }
+    };
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const quoteId = urlParams.get("quoteId");
+
+    if (quoteId && quoteFetchedRef.current !== quoteId) {
+      console.log("Quote ID detected in URL:", quoteId);
+      fetchQuoteDetails(quoteId);
+    } else if (quoteId) {
+      console.log(
+        "Quote already processed:",
+        quoteId,
+        "Current ref:",
+        quoteFetchedRef.current
+      );
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Run once on mount - isLoadingQuote check is inside fetchQuoteDetails
 
   useEffect(() => {
     const supabase = createClient();
@@ -407,28 +599,34 @@ export default function BookingWizard({
   ]);
 
   const handleStartNew = () => {
+    // Clear all booking data from storage
     clearBookingData();
+
+    // Reset all component state to initial values
     setCurrentStep(1);
-    // Reset quote flow flags to default (normal booking flow)
     setForceQuoteFlow(false);
     setHasAnyPricing(false);
     setPricingLoading(false);
+    setIsLoadingQuote(false);
+    quoteFetchedRef.current = null; // Reset quote fetch tracking
 
-    const fresh = getBookingData();
-    setBookingData(
-      fresh || {
-        type: "one-way",
-        from: "",
-        to: "",
-        date: "",
-        time: "",
-        submittedAt: "",
-        passengers: 1,
-        isQuote: false, // Default to normal booking flow
-        currentStep: 1,
-        completedSteps: [],
-      }
-    );
+    // Reset booking data to initial state
+    const initialData = {
+      type: "one-way" as const,
+      from: "",
+      to: "",
+      date: "",
+      time: "",
+      submittedAt: "",
+      passengers: 1,
+      isQuote: false, // Default to normal booking flow
+      currentStep: 1,
+      completedSteps: [],
+    };
+    setBookingData(initialData);
+
+    // Navigate to clean /book-now URL without any parameters
+    router.push("/book-now");
   };
 
   // Enhanced close handler that clears session storage
@@ -551,6 +749,19 @@ export default function BookingWizard({
 
   return (
     <div className="min-h-screen bg-gray-50 pb-16 sm:pb-20">
+      {/* Loading state for quote fetching */}
+      {isLoadingQuote && (
+        <div className="fixed inset-0 bg-white bg-opacity-90 flex items-center justify-center z-50">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-4 border-amber-500 border-t-transparent mx-auto mb-4"></div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+              Loading Your Quote
+            </h3>
+            <p className="text-gray-600">Preparing your booking details...</p>
+          </div>
+        </div>
+      )}
+
       <WizardProgress
         steps={derivedSteps}
         currentStep={currentStep}

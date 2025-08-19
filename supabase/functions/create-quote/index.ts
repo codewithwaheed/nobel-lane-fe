@@ -106,6 +106,29 @@ serve(async (req) => {
 
         // Parse request body
         const quoteRequest: QuoteRequest = await req.json();
+
+        // DEBUG: Log the complete request to see pricing data
+        console.log("🔍 DEBUGGING: Complete quote request received:", {
+            selectedVehicle: quoteRequest.selectedVehicle,
+            pricingBreakdown: quoteRequest.pricingBreakdown,
+            hasVehicle: !!quoteRequest.selectedVehicle,
+            hasPricing: !!quoteRequest.pricingBreakdown,
+            vehicleName: quoteRequest.selectedVehicle?.name,
+            baseRate: quoteRequest.pricingBreakdown?.baseRate,
+            totalCalculated: quoteRequest.pricingBreakdown?.totalCalculated,
+        });
+        // Normalize trip type to match database constraints
+        const normalizeTripType = (tripType: string): string => {
+            switch (tripType) {
+                case "by-the-hour":
+                    return "hourly";
+                case "one-way":
+                    return "one-way";
+                default:
+                    return "one-way"; // Default fallback
+            }
+        };
+
         console.log("📝 Quote request data:", {
             type: quoteRequest.quoteType,
             email: quoteRequest.customerEmail,
@@ -163,7 +186,7 @@ serve(async (req) => {
             customer_company: quoteRequest.customerCompany || "",
 
             // Trip details
-            trip_type: quoteRequest.tripType || "one-way",
+            trip_type: normalizeTripType(quoteRequest.tripType || "one-way"),
             pickup_address: quoteRequest.from,
             destination_address: quoteRequest.to || "",
             pickup_date: quoteRequest.date,
@@ -257,13 +280,39 @@ serve(async (req) => {
             throw new Error(`Database error: ${quoteError.message}`);
         }
 
+        // Generate formatted quote number and update the record
+        const quoteNumber = `QT-${String(quote.id).slice(0, 8).toUpperCase()}`;
+
+        // Update the quote with the formatted quote_number
+        const { error: updateError } = await supabaseClient
+            .from("quotes")
+            .update({ quote_number: quoteNumber })
+            .eq("id", quote.id);
+
+        if (updateError) {
+            console.error("❌ Error updating quote number:", updateError);
+            // Don't throw error here, quote is still valid without quote_number
+        } else {
+            console.log("✅ Quote number updated:", quoteNumber);
+        }
+
         console.log("✅ Quote created successfully:", quote.id);
 
         // Send quote confirmation email
         try {
-            const quoteNumber = `QT-${
-                String(quote.id).slice(0, 8).toUpperCase()
-            }`;
+            console.log(
+                "📧 Preparing to send quote confirmation email with data:",
+                {
+                    vehicleName: quoteRequest.selectedVehicle?.name ||
+                        "Standard Vehicle",
+                    totalCalculated: quoteRequest.pricingBreakdown
+                        ?.totalCalculated,
+                    baseRate: quoteRequest.pricingBreakdown?.baseRate,
+                    gratuity: quoteRequest.pricingBreakdown?.gratuity,
+                    pricingBreakdown: quoteRequest.pricingBreakdown,
+                },
+            );
+
             const emailResponse = await fetch(
                 `${
                     Deno.env.get("SUPABASE_URL")
@@ -278,7 +327,7 @@ serve(async (req) => {
                     },
                     body: JSON.stringify({
                         type: "quote",
-                        quoteId: quote.id,
+                        quoteId: quote.id, // Use the actual quote ID for database lookup
                         quoteNumber: quoteNumber,
                         customerEmail: quoteRequest.customerEmail,
                         customerName: `${
@@ -290,7 +339,29 @@ serve(async (req) => {
                             .toLocaleDateString(),
                         pickupTime: quoteRequest.time,
                         passengers: quoteRequest.passengers || 1,
-                        vehicleName: "To be determined based on requirements",
+                        vehicleName: quoteRequest.selectedVehicle?.name ||
+                            "Standard Vehicle",
+                        totalAmount: parseFloatSafe(
+                            quoteRequest.pricingBreakdown?.totalCalculated,
+                        ),
+                        pricingBreakdown: quoteRequest.pricingBreakdown
+                            ? {
+                                baseRate:
+                                    parseFloatSafe(
+                                        quoteRequest.pricingBreakdown?.baseRate,
+                                    ) || 0,
+                                gratuity:
+                                    parseFloatSafe(
+                                        quoteRequest.pricingBreakdown?.gratuity,
+                                    ) || 0,
+                                totalAmount:
+                                    parseFloatSafe(
+                                        quoteRequest.pricingBreakdown
+                                            ?.totalCalculated,
+                                    ) || 0,
+                                additionalFees: [],
+                            }
+                            : undefined,
                         sendSMS: true, // Enable SMS notifications for quotes
                         phoneNumber: quoteRequest.customerPhone,
                     }),

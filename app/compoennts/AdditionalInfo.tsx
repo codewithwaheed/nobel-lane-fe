@@ -153,8 +153,21 @@ export default function AdditionalInfo({
         // Vehicle selection
         selectedVehicle: bookingData.selectedVehicle,
 
-        // Pricing and recommendations
-        pricingDetails,
+        // Pricing breakdown (convert to expected backend structure)
+        pricingBreakdown: pricingDetails
+          ? {
+              baseRate: pricingDetails.baseRate || 0,
+              tolls: pricingDetails.tollsRate || 0,
+              extras: pricingDetails.extrasRate || 0,
+              subtotal:
+                (pricingDetails.baseRate || 0) +
+                (pricingDetails.tollsRate || 0) +
+                (pricingDetails.extrasRate || 0),
+              gratuity: pricingDetails.gratuityRate || 0,
+              totalCalculated: pricingDetails.totalPrice || 0,
+              extrasBreakdown: {},
+            }
+          : undefined,
         recommendations,
 
         // Metadata

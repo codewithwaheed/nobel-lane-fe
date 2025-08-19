@@ -238,7 +238,7 @@ async function handlePaymentSuccess(
         },
       );
     }
-
+    console.log({ metadata });
     // 1. Create booking record in database with comprehensive data
     const { data: booking, error: bookingError } = await supabaseClient
       .from("bookings")
@@ -247,19 +247,16 @@ async function handlePaymentSuccess(
         user_id: metadata.userId || null,
 
         // Customer information (with improved fallback logic)
-        customer_email: metadata.userEmail ||
-            paymentIntent.receipt_email ||
-            metadata.customerEmail ||
-            metadata.from?.includes("@")
-          ? metadata.from
-          : "", // fallback in case email is in wrong field
-        customer_phone: metadata.userPhone ||
+        customer_email: metadata.userEmail ??
+          paymentIntent.receipt_email ??
+          metadata.customerEmail ?? "",
+        customer_phone: metadata.phone ||
           metadata.customerPhone ||
-          metadata.phone || // additional fallback
+          metadata.userPhone || // additional fallback
           "",
 
         // Trip details
-        trip_type: metadata.tripType || "one-way",
+        trip_type: normalizeTripType(metadata.tripType || "one-way"),
         pickup_address: metadata.from || "",
         destination_address: metadata.to || "",
         pickup_date: metadata.date || "",
@@ -329,10 +326,23 @@ async function handlePaymentSuccess(
 
     console.log("✅ Booking created successfully:", booking.id);
 
-    // 2. Generate confirmation number
+    // 2. Generate confirmation number and update the record
     const confirmationNumber = `NL-${
       String(booking.id).slice(0, 8).toUpperCase()
     }`;
+
+    // Update the booking with the formatted booking_number
+    const { error: updateError } = await supabaseClient
+      .from("bookings")
+      .update({ booking_number: confirmationNumber })
+      .eq("id", booking.id);
+
+    if (updateError) {
+      console.error("❌ Error updating booking number:", updateError);
+      // Don't throw error here, booking is still valid without booking_number
+    } else {
+      console.log("✅ Booking number updated:", confirmationNumber);
+    }
 
     // 3. Send confirmation email via Edge Function
     try {
@@ -364,6 +374,59 @@ async function handlePaymentSuccess(
             confirmationNumber,
             sendSMS: true, // Enable SMS notifications for bookings
             phoneNumber: metadata.userPhone || metadata.customerPhone,
+            // Add detailed pricing breakdown
+            pricingBreakdown: {
+              baseRate: parseFloatSafe(metadata.baseRate),
+              gratuity: parseFloatSafe(metadata.gratuityAmount),
+              gratuityPercentage: 20, // Standard 20% gratuity
+              additionalFees: [
+                // Add tolls if present
+                ...(parseFloatSafe(metadata.tollsAmount) > 0
+                  ? [{
+                    name: "DFW Airport Toll",
+                    amount: parseFloatSafe(metadata.tollsAmount),
+                    description: "Airport toll fees",
+                  }]
+                  : []),
+                // Add extra stops fee if present
+                ...(parseFloatSafe(metadata.extraStopsFee) > 0
+                  ? [{
+                    name: "Extra Stops",
+                    amount: parseFloatSafe(metadata.extraStopsFee),
+                    description: `Additional ${
+                      metadata.extraStopsCount || 1
+                    } stop${
+                      (parseIntSafe(metadata.extraStopsCount, 0) > 1) ? "s" : ""
+                    } ($10 each)`,
+                  }]
+                  : []),
+                // Add international arrival fee if present
+                ...(parseFloatSafe(metadata.internationalArrivalFee) > 0
+                  ? [{
+                    name: "International Arrival",
+                    amount: parseFloatSafe(metadata.internationalArrivalFee),
+                    description: "International arrival processing fee",
+                  }]
+                  : []),
+                // Add early/late pickup fee if present
+                ...(parseFloatSafe(metadata.earlyLatePickupFee) > 0
+                  ? [{
+                    name: "Early/Late Pickup",
+                    amount: parseFloatSafe(metadata.earlyLatePickupFee),
+                    description: "Pickup outside standard hours (6 AM - 10 PM)",
+                  }]
+                  : []),
+                // Add holiday fee if present
+                ...(parseFloatSafe(metadata.holidayFee) > 0
+                  ? [{
+                    name: "Holiday Surcharge",
+                    amount: parseFloatSafe(metadata.holidayFee),
+                    description: "Holiday booking surcharge",
+                  }]
+                  : []),
+              ],
+              totalAmount: paymentIntent.amount / 100,
+            },
           }),
         },
       );
@@ -405,6 +468,18 @@ async function handlePaymentSuccess(
         status: 500,
       },
     );
+  }
+}
+
+// Normalize trip type to match database constraints
+function normalizeTripType(tripType: string): string {
+  switch (tripType) {
+    case "by-the-hour":
+      return "hourly";
+    case "one-way":
+      return "one-way";
+    default:
+      return "one-way";
   }
 }
 
