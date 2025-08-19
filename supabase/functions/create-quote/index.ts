@@ -191,8 +191,6 @@ serve(async (req) => {
             destination_address: quoteRequest.to || "",
             pickup_date: quoteRequest.date,
             pickup_time: quoteRequest.time,
-            return_date: quoteRequest.returnDate || null,
-            return_time: quoteRequest.returnTime || null,
             trip_duration: quoteRequest.duration || null,
             passengers: quoteRequest.passengers || 1,
 
@@ -346,19 +344,16 @@ serve(async (req) => {
                         ),
                         pricingBreakdown: quoteRequest.pricingBreakdown
                             ? {
-                                baseRate:
-                                    parseFloatSafe(
-                                        quoteRequest.pricingBreakdown?.baseRate,
-                                    ) || 0,
-                                gratuity:
-                                    parseFloatSafe(
-                                        quoteRequest.pricingBreakdown?.gratuity,
-                                    ) || 0,
-                                totalAmount:
-                                    parseFloatSafe(
-                                        quoteRequest.pricingBreakdown
-                                            ?.totalCalculated,
-                                    ) || 0,
+                                baseRate: parseFloatSafe(
+                                    quoteRequest.pricingBreakdown?.baseRate,
+                                ) || 0,
+                                gratuity: parseFloatSafe(
+                                    quoteRequest.pricingBreakdown?.gratuity,
+                                ) || 0,
+                                totalAmount: parseFloatSafe(
+                                    quoteRequest.pricingBreakdown
+                                        ?.totalCalculated,
+                                ) || 0,
                                 additionalFees: [],
                             }
                             : undefined,

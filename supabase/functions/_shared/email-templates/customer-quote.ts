@@ -133,7 +133,7 @@ export function generateQuoteConfirmationHTML(data: QuoteEmailData): string {
       <div class="card" style="background:linear-gradient(135deg,#fbbf24 0%,#f59e0b 100%);border:none;text-align:center;color:#fff;">
         <div style="font-weight:800;font-size:18px;margin-bottom:8px;">Ready to Book?</div>
         <div style="opacity:0.95;margin-bottom:16px;font-size:14px;">Skip the wait and book directly with your quote details pre-filled</div>
-        <a href="${baseUrl}/book-now?quoteId=${escapeHtml(data.quoteId)}" 
+        <a href="${baseUrl}/book-now?quoteId=${escapeHtml(data.quoteNumber)}" 
            style="display:inline-block;background:#fff;color:#f59e0b;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:700;font-size:16px;box-shadow:0 2px 4px rgba(0,0,0,0.1);">
           📅 Book This Quote Now
         </a>
@@ -230,7 +230,7 @@ WHAT HAPPENS NEXT:
 READY TO BOOK NOW?
 ==================
 Skip the wait and book directly with your quote details already filled in:
-🔗 ${baseUrl}/book-now?quoteId=${data.quoteId}
+🔗 ${baseUrl}/book-now?quoteId=${data.quoteNumber}
 
 Click the link above or copy and paste it into your browser to start booking immediately.
 
