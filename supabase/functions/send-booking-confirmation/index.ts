@@ -473,6 +473,17 @@ serve(async (req) => {
           quoteNumber: referenceNumber,
           tripType: "one-way",
           submittedAt: new Date().toISOString(),
+          // Enhanced pricing breakdown for detailed display
+          pricingBreakdown: enhancedPricingBreakdown
+            ? {
+              baseRate: enhancedPricingBreakdown.baseRate,
+              gratuity: enhancedPricingBreakdown.gratuity,
+              gratuityPercentage: enhancedPricingBreakdown.gratuityPercentage ||
+                20,
+              additionalFees: enhancedPricingBreakdown.additionalFees || [],
+              totalAmount: enhancedPricingBreakdown.totalAmount,
+            }
+            : undefined,
         };
 
         // Debug logging for pricing information

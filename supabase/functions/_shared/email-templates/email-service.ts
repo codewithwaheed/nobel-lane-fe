@@ -115,9 +115,9 @@ function buildPricingTable(
               Gratuity ${
     breakdown.gratuityPercentage
       ? `(${escapeHtml(String(breakdown.gratuityPercentage))}%)`
-      : ""
+      : "(20%)"
   }
-              <div style="color:#6b7280; font-size:12px; line-height:1.4; margin-top:2px;">Recommended for exceptional service</div>
+              <div style="color:#6b7280; font-size:12px; line-height:1.4; margin-top:2px;">100% goes to driver</div>
             </td>
             <td align="right" style="padding:12px 0; border-top:1px solid #e5e7eb; font-weight:700; color:#111827; white-space:nowrap;">
               ${formatCurrency(breakdown.gratuity)}

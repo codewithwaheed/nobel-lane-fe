@@ -72,6 +72,18 @@ interface QuoteRequest {
             holiday?: number;
             dfwToll?: number;
         };
+        // Enhanced pricing structure for email templates
+        emailPricingBreakdown?: {
+            baseRate: number;
+            gratuity: number;
+            gratuityPercentage: number;
+            additionalFees: Array<{
+                name: string;
+                amount: number;
+                description?: string;
+            }>;
+            totalAmount: number;
+        };
     };
 
     // Additional data
@@ -350,11 +362,16 @@ serve(async (req) => {
                                 gratuity: parseFloatSafe(
                                     quoteRequest.pricingBreakdown?.gratuity,
                                 ) || 0,
+                                gratuityPercentage: 20,
                                 totalAmount: parseFloatSafe(
                                     quoteRequest.pricingBreakdown
                                         ?.totalCalculated,
                                 ) || 0,
-                                additionalFees: [],
+                                // Enhanced additional fees from the detailed breakdown
+                                additionalFees:
+                                    quoteRequest.pricingBreakdown
+                                        .emailPricingBreakdown
+                                        ?.additionalFees || [],
                             }
                             : undefined,
                         sendSMS: true, // Enable SMS notifications for quotes

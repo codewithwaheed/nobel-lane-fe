@@ -211,8 +211,8 @@ ${
       }
 Gratuity${
         data.pricingBreakdown.gratuityPercentage
-          ? ` (${data.pricingBreakdown.gratuityPercentage}%)`
-          : ""
+          ? ` (${data.pricingBreakdown.gratuityPercentage}% - 100% to the Driver)`
+          : " (100% to the Driver)"
       }:      ${formatCurrency(data.pricingBreakdown.gratuity)}
 ==========================================
 ESTIMATED TOTAL:   ${formatCurrency(data.pricingBreakdown.totalAmount)}

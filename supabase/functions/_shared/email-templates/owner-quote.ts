@@ -1,5 +1,7 @@
 // Owner quote notification email templates
 
+import { buildPricingTable, formatCurrency } from "./email-service.ts";
+
 export interface OwnerQuoteData {
   customerEmail: string;
   customerPhone: string;
@@ -21,6 +23,18 @@ export interface OwnerQuoteData {
   pickupZipcode?: string;
   dropoffZipcode?: string;
   submittedAt: string;
+  // Enhanced pricing breakdown
+  pricingBreakdown?: {
+    baseRate: number;
+    gratuity: number;
+    gratuityPercentage?: number;
+    additionalFees: Array<{
+      name: string;
+      amount: number;
+      description?: string;
+    }>;
+    totalAmount: number;
+  };
 }
 
 export function generateOwnerQuoteHTML(data: OwnerQuoteData): string {
@@ -139,17 +153,30 @@ export function generateOwnerQuoteHTML(data: OwnerQuoteData): string {
         </div>
         
         <div class="price-highlight">
-            💰 Estimated Amount: ${
-    (data.totalPrice && typeof data.totalPrice === "number" &&
-        data.totalPrice > 0)
-      ? `$${data.totalPrice.toFixed(2)}`
-      : "Pricing Required - Please Calculate Quote"
+            ${
+    data.pricingBreakdown
+      ? `
+                <h4 style="margin-bottom: 15px; color: #1f2937;">💰 Estimated Pricing Breakdown</h4>
+                ${buildPricingTable(data.pricingBreakdown, "amber")}
+                <p style="margin-top: 10px; font-size: 13px; color: #6b7280; font-style: italic;">
+                  📝 This is an estimated quote. Final pricing may vary based on route conditions and additional services.
+                </p>
+              `
+      : `
+                💰 Estimated Amount: ${
+        (data.totalPrice && typeof data.totalPrice === "number" &&
+            data.totalPrice > 0)
+          ? `$${data.totalPrice.toFixed(2)}`
+          : "Pricing Required - Please Calculate Quote"
+      }
+                <br><small style="font-size: 14px; color: #6b7280;">(Base Rate: ${
+        (data.baseRate && typeof data.baseRate === "number" &&
+            data.baseRate > 0)
+          ? `$${data.baseRate.toFixed(2)}`
+          : "TBD"
+      })</small>
+              `
   }
-            <br><small style="font-size: 14px; color: #6b7280;">(Base Rate: ${
-    (data.baseRate && typeof data.baseRate === "number" && data.baseRate > 0)
-      ? `$${data.baseRate.toFixed(2)}`
-      : "TBD"
-  })</small>
         </div>
         
         <div class="action-items">
@@ -228,22 +255,48 @@ ${data.specialRequests ? `Special Requests: ${data.specialRequests}` : ""}
 ${data.pickupZipcode ? `Pickup Zone: ${data.pickupZipcode}` : ""}
 ${data.dropoffZipcode ? `Dropoff Zone: ${data.dropoffZipcode}` : ""}
 
-ESTIMATED AMOUNT: ${
-    (data.totalPrice && typeof data.totalPrice === "number" &&
-        data.totalPrice > 0)
-      ? `$${data.totalPrice.toFixed(2)}`
-      : "Pricing Required - Please Calculate Quote"
-  }
+${
+    data.pricingBreakdown
+      ? `ESTIMATED PRICING BREAKDOWN:
+==========================================
+Base Rate:         ${formatCurrency(data.pricingBreakdown.baseRate)}${
+        data.pricingBreakdown.additionalFees &&
+          data.pricingBreakdown.additionalFees.length > 0
+          ? `\n\nAdditional Services:\n${
+            data.pricingBreakdown.additionalFees
+              .map((fee) =>
+                `  • ${fee.name}: ${formatCurrency(fee.amount)}${
+                  fee.description ? ` (${fee.description})` : ""
+                }`
+              )
+              .join("\n")
+          }`
+          : ""
+      }
+Gratuity${
+        data.pricingBreakdown.gratuityPercentage
+          ? ` (${data.pricingBreakdown.gratuityPercentage}%)`
+          : ""
+      }:      ${formatCurrency(data.pricingBreakdown.gratuity)}
+
+ESTIMATED TOTAL:   ${formatCurrency(data.pricingBreakdown.totalAmount)}
+
+📝 This is an estimated quote. Final pricing may vary based on route conditions and additional services.
+`
+      : `ESTIMATED AMOUNT: ${
+        (data.totalPrice && typeof data.totalPrice === "number" &&
+            data.totalPrice > 0)
+          ? `$${data.totalPrice.toFixed(2)}`
+          : "Pricing Required - Please Calculate Quote"
+      }
 Base Rate: ${
-    (data.baseRate && typeof data.baseRate === "number" && data.baseRate > 0)
-      ? `$${data.baseRate.toFixed(2)}`
-      : "TBD"
+        (data.baseRate && typeof data.baseRate === "number" &&
+            data.baseRate > 0)
+          ? `$${data.baseRate.toFixed(2)}`
+          : "TBD"
+      }
+`
   }
-(Base Rate: $${
-    (data.baseRate && typeof data.baseRate === "number")
-      ? data.baseRate.toFixed(2)
-      : "TBD"
-  })
 
 NEXT STEPS:
 1. Vehicle Assignment: Check availability and assign driver

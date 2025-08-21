@@ -3,6 +3,7 @@
 import { useState } from "react";
 import {
   calculatePricingBreakdown,
+  calculatePricingExtras,
   getSmartRecommendations,
 } from "@/lib/pricing-logic";
 import { Button } from "@/components/ui/button";
@@ -16,6 +17,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Plus,
+  DollarSign,
 } from "lucide-react";
 import type { BookingFormData } from "@/lib/booking-storage";
 import { clearBookingData } from "@/lib/booking-storage";
@@ -24,6 +26,110 @@ import {
   validateUSPhoneNumber,
   formatPhoneInput,
 } from "@/lib/phone-validation";
+import { Separator } from "@/components/ui/separator";
+
+// Helper function to format price
+const formatPrice = (price: number): string => {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+  }).format(price);
+};
+
+// Helper function to convert time to CST and check for early/late fee
+const isEarlyOrLatePickupCST = (date: string, time: string): boolean => {
+  if (!date || !time) return false;
+
+  try {
+    // Create a date object in CST timezone
+    const dateTimeString = `${date} ${time}`;
+    const dateTime = new Date(`${dateTimeString} America/Chicago`);
+
+    // Get hours in CST
+    const cstHours = dateTime.toLocaleString("en-US", {
+      timeZone: "America/Chicago",
+      hour12: false,
+      hour: "numeric",
+    });
+
+    const hours = parseInt(cstHours);
+    console.log("🕐 CST time check:", {
+      originalTime: time,
+      originalDate: date,
+      cstHours: hours,
+      isEarlyLate: hours < 6 || hours >= 22,
+    });
+
+    return hours < 6 || hours >= 22;
+  } catch (error) {
+    console.error("Error converting to CST:", error);
+    // Fallback to original parsing logic
+    const t = time.trim().toUpperCase();
+    const ampm = t.endsWith("AM") || t.endsWith("PM") ? t.slice(-2) : "";
+    const core = ampm ? t.slice(0, -2).trim() : t;
+    const [hStr] = core.split(":");
+    let h = Number(hStr);
+    if (Number.isNaN(h)) return false;
+    if (ampm === "AM") {
+      if (h === 12) h = 0;
+    } else if (ampm === "PM") {
+      if (h !== 12) h += 12;
+    }
+    return h < 6 || h >= 22;
+  }
+};
+
+// Helper function to calculate detailed pricing breakdown for quote display
+const calculateQuotePricingBreakdown = (bookingData: BookingFormData) => {
+  const base = calculatePricingBreakdown(bookingData);
+  const extras = calculatePricingExtras(bookingData);
+
+  // Check for early/late pickup using CST
+  const isEarlyLate = isEarlyOrLatePickupCST(
+    bookingData.date || "",
+    bookingData.time || ""
+  );
+
+  // Override the early/late fee calculation with CST-based logic
+  if (isEarlyLate && extras.earlyLatePickup === 0) {
+    extras.earlyLatePickup = 20; // $20 early/late fee
+  }
+
+  // Debug logging for early/late fee
+  console.log("🔍 DEBUGGING: Quote pricing calculation:", {
+    time: bookingData.time,
+    date: bookingData.date,
+    isEarlyLate,
+    earlyLatePickup: extras.earlyLatePickup,
+    allExtras: extras,
+  });
+
+  // Calculate detailed breakdown like in Payment component
+  const baseRate = base.baseRate || 0;
+  const extraStopsCount = Number(bookingData?.extraStopsCount ?? 0);
+  const tolls = Number(extras.dfwToll || 0);
+  const extrasOnly =
+    Number(extras.extraStops || 0) +
+    Number(extras.internationalArrival || 0) +
+    Number(extras.earlyLatePickup || 0) +
+    Number(extras.holiday || 0);
+
+  const subtotal = Number((baseRate + tolls + extrasOnly).toFixed(2));
+  const gratuityRate = Number((subtotal * 0.2).toFixed(2));
+  const totalPrice = Number((subtotal + gratuityRate).toFixed(2));
+
+  return {
+    base,
+    baseRate,
+    extras,
+    extrasOnly,
+    tolls,
+    subtotal,
+    gratuityRate,
+    totalPrice,
+    extraStopsCount,
+  };
+};
 
 interface AdditionalInfoProps {
   isQuote: boolean;
@@ -153,21 +259,85 @@ export default function AdditionalInfo({
         // Vehicle selection
         selectedVehicle: bookingData.selectedVehicle,
 
-        // Pricing breakdown (convert to expected backend structure)
-        pricingBreakdown: pricingDetails
-          ? {
-              baseRate: pricingDetails.baseRate || 0,
-              tolls: pricingDetails.tollsRate || 0,
-              extras: pricingDetails.extrasRate || 0,
-              subtotal:
-                (pricingDetails.baseRate || 0) +
-                (pricingDetails.tollsRate || 0) +
-                (pricingDetails.extrasRate || 0),
-              gratuity: pricingDetails.gratuityRate || 0,
-              totalCalculated: pricingDetails.totalPrice || 0,
-              extrasBreakdown: {},
-            }
-          : undefined,
+        // Enhanced pricing breakdown with detailed structure for emails
+        pricingBreakdown: (() => {
+          if (!pricingDetails) return undefined;
+
+          const detailedPricing = calculateQuotePricingBreakdown(bookingData);
+
+          // Build additional fees array for email template
+          const additionalFees = [];
+
+          if (detailedPricing.extras.internationalArrival > 0) {
+            additionalFees.push({
+              name: "International Arrival",
+              amount: detailedPricing.extras.internationalArrival,
+              description: "International arrival processing fee",
+            });
+          }
+
+          if (detailedPricing.extras.earlyLatePickup > 0) {
+            additionalFees.push({
+              name: "Early/Late Pickup",
+              amount: detailedPricing.extras.earlyLatePickup,
+              description: "Pickup outside standard hours (6 AM - 10 PM)",
+            });
+          }
+
+          if (detailedPricing.extras.holiday > 0) {
+            additionalFees.push({
+              name: "Holiday Surcharge",
+              amount: detailedPricing.extras.holiday,
+              description: "Holiday booking surcharge",
+            });
+          }
+
+          if (
+            detailedPricing.extras.extraStops > 0 &&
+            detailedPricing.extraStopsCount > 0
+          ) {
+            additionalFees.push({
+              name: "Extra Stops",
+              amount: detailedPricing.extras.extraStops,
+              description: `Additional ${detailedPricing.extraStopsCount} stop${
+                detailedPricing.extraStopsCount === 1 ? "" : "s"
+              } ($10 each)`,
+            });
+          }
+
+          if (detailedPricing.tolls > 0) {
+            additionalFees.push({
+              name: "DFW Airport Toll",
+              amount: detailedPricing.tolls,
+              description: "Airport toll fees",
+            });
+          }
+
+          return {
+            baseRate: pricingDetails.baseRate || 0,
+            tolls: pricingDetails.tollsRate || 0,
+            extras: pricingDetails.extrasRate || 0,
+            subtotal: detailedPricing.subtotal,
+            gratuity: detailedPricing.gratuityRate,
+            totalCalculated: detailedPricing.totalPrice,
+            // Enhanced structure for email templates
+            emailPricingBreakdown: {
+              baseRate: detailedPricing.baseRate,
+              gratuity: detailedPricing.gratuityRate,
+              gratuityPercentage: 20,
+              additionalFees,
+              totalAmount: detailedPricing.totalPrice,
+            },
+            extrasBreakdown: {
+              extraStops: detailedPricing.extras.extraStops || 0,
+              internationalArrival:
+                detailedPricing.extras.internationalArrival || 0,
+              earlyLatePickup: detailedPricing.extras.earlyLatePickup || 0,
+              holiday: detailedPricing.extras.holiday || 0,
+              dfwToll: detailedPricing.extras.dfwToll || 0,
+            },
+          };
+        })(),
         recommendations,
 
         // Metadata
@@ -312,6 +482,110 @@ export default function AdditionalInfo({
                     coordinate your booking.
                   </p>
                 </div>
+
+                {/* Estimated Pricing Breakdown - Only for quotes */}
+                {isQuote &&
+                  (() => {
+                    const pricingData =
+                      calculateQuotePricingBreakdown(bookingData);
+
+                    return (
+                      <div className="lg:col-span-2 border-t border-gray-100 pt-6">
+                        <div className="flex items-center gap-2 mb-4">
+                          <DollarSign className="w-5 h-5 text-green-600" />
+                          <h3 className="text-lg font-semibold text-gray-900">
+                            Estimated Pricing Breakdown
+                          </h3>
+                        </div>
+
+                        <div className="bg-gray-50 rounded-lg p-4 space-y-3">
+                          <div className="space-y-2 text-sm">
+                            <div className="flex justify-between">
+                              <span className="text-gray-600">Base fare</span>
+                              <span className="font-medium">
+                                {formatPrice(pricingData.baseRate)}
+                              </span>
+                            </div>
+
+                            {pricingData.extrasOnly > 0 && (
+                              <div className="flex justify-between">
+                                <div>
+                                  <span className="text-gray-600">
+                                    Additional services
+                                  </span>
+                                  <div className="text-xs text-gray-500">
+                                    {[
+                                      pricingData.extras.internationalArrival >
+                                        0 && "International arrival",
+                                      pricingData.extras.earlyLatePickup > 0 &&
+                                        "Early/late pickup",
+                                      pricingData.extras.holiday > 0 &&
+                                        "Holiday surcharge",
+                                      pricingData.extras.extraStops > 0 &&
+                                        pricingData.extraStopsCount > 0 &&
+                                        `${
+                                          pricingData.extraStopsCount
+                                        } extra stop${
+                                          pricingData.extraStopsCount === 1
+                                            ? ""
+                                            : "s"
+                                        }`,
+                                    ]
+                                      .filter(Boolean)
+                                      .join(", ")}
+                                  </div>
+                                </div>
+                                <span className="font-medium">
+                                  {formatPrice(pricingData.extrasOnly)}
+                                </span>
+                              </div>
+                            )}
+
+                            {pricingData.tolls > 0 && (
+                              <div className="flex justify-between">
+                                <span className="text-gray-600">
+                                  Estimated tolls
+                                </span>
+                                <span className="font-medium">
+                                  {formatPrice(pricingData.tolls)}
+                                </span>
+                              </div>
+                            )}
+
+                            <div className="flex justify-between">
+                              <div>
+                                <span className="text-gray-600">
+                                  Gratuity (20%)
+                                </span>
+                                <div className="text-xs text-gray-500">
+                                  100% goes to driver
+                                </div>
+                              </div>
+                              <span className="font-medium">
+                                {formatPrice(pricingData.gratuityRate)}
+                              </span>
+                            </div>
+
+                            <Separator />
+
+                            <div className="flex justify-between font-semibold text-lg">
+                              <span>Estimated Total</span>
+                              <span>{formatPrice(pricingData.totalPrice)}</span>
+                            </div>
+                          </div>
+
+                          <div className="text-xs text-gray-500 bg-blue-50 p-3 rounded border border-blue-100">
+                            <div className="font-medium text-blue-900 mb-1">
+                              💡 About This Estimate
+                            </div>
+                            This is a preliminary estimate. Our team will send
+                            you the final quote with exact pricing, or contact
+                            you directly to confirm all details.
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })()}
 
                 {/* Extra Stops - Hidden for quotes */}
                 {!isQuote && (

@@ -427,7 +427,12 @@ function PaymentForm({
                 )}
 
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Gratuity (20%)</span>
+                  <div>
+                    <span className="text-gray-600">Gratuity (20%)</span>
+                    <div className="text-xs text-gray-500">
+                      100% goes to driver
+                    </div>
+                  </div>
                   <span className="font-medium">
                     {formatPrice(gratuityRate)}
                   </span>
