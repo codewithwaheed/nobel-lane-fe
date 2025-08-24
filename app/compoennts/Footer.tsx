@@ -61,6 +61,16 @@ export default function Footer() {
               </Link>
             </li>
             <li>
+              <Link href="#" className="hover:text-yellow-400 me-4 md:me-6">
+                City Guide
+              </Link>
+            </li>
+            <li>
+              <Link href="#" className="hover:text-yellow-400 me-4 md:me-6">
+                World Cup
+              </Link>
+            </li>
+            <li>
               <button
                 onClick={() => setIsBookingModalOpen(true)}
                 className="hover:text-yellow-400 bg-transparent border-none text-sm font-medium text-gray-300 cursor-pointer"

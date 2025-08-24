@@ -4,13 +4,6 @@ import { Button } from "@/components/ui/button";
 
 const specialEventsData = [
   {
-    icon: Sparkles,
-    title: "Galas & Award Ceremonies",
-    description:
-      "Red carpet arrivals and VIP transportation for prestigious events, charity galas, and award shows.",
-    features: ["Red carpet service", "Photo coordination", "VIP treatment"],
-  },
-  {
     icon: Plane,
     title: "Private FBO",
     description:
@@ -32,30 +25,6 @@ const specialEventsData = [
       "Group packages",
     ],
   },
-  {
-    icon: Calendar,
-    title: "Special Occasions",
-    description:
-      "Milestone celebrations, anniversary dinners, and exclusive private events with luxury service.",
-    features: [
-      "Personalized service",
-      "Special decorations",
-      "Flexible scheduling",
-    ],
-  },
-
-  {
-    icon: MapPin,
-    title: "City Tours & Entertainment",
-    description:
-      "Executive city tours, entertainment venues, and cultural events throughout Dallas-Fort Worth.",
-    features: [
-      "Local expertise",
-      "Custom routes",
-      "Entertainment coordination",
-    ],
-  },
-
   {
     icon: Clock,
     title: "Multi-Day Events",
@@ -128,7 +97,7 @@ const SpecialEventsSection: React.FC = () => {
           {/* CTA Section */}
           <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 md:p-12 mt-16 text-center border border-gray-200 dark:border-gray-700">
             <h3 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-4">
-              Planning a Special Event?
+              Planning a Group Event?
             </h3>
             <p className="text-lg text-gray-600 dark:text-gray-400 mb-8 max-w-2xl mx-auto">
               Our event coordination specialists work with you to create a

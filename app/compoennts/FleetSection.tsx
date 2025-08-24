@@ -37,11 +37,11 @@ const fleetData = [
   },
   {
     id: 4,
-    name: "Revised Car",
+    name: "Standard Car",
     image: "/revised-car.png",
     passengers: 4,
     bags: 2,
-    description: "A revised car model for a comfortable ride.",
+    description: "A Standard car model for a comfortable ride.",
   },
   {
     id: 5,

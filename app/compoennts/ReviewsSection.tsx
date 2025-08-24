@@ -85,7 +85,7 @@ const TestimonialItemComponent: React.FC<TestimonialItemProps> = ({ item }) => {
       <div className="mt-4">
         <div className="flex justify-between flex-wrap md:flex-nowrap items-center mb-6">
           <div className="flex items-center">
-            <div className="mr-3 flex-shrink-0">
+            {/* <div className="mr-3 flex-shrink-0">
               <Image
                 src={photo}
                 alt={name}
@@ -93,7 +93,7 @@ const TestimonialItemComponent: React.FC<TestimonialItemProps> = ({ item }) => {
                 width={50}
                 height={50}
               />
-            </div>
+            </div> */}
             <div>
               <h5 className="text-lg font-semibold text-gray-900 dark:text-white">
                 {name}
