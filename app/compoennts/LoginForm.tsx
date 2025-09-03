@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -41,6 +42,7 @@ export function LoginForm({
     phone: "",
     company: "",
   });
+  const [acceptTerms, setAcceptTerms] = useState(false);
 
   const handlePhoneChange = (value: string) => {
     // Format the phone number as user types
@@ -148,6 +150,15 @@ export function LoginForm({
       return;
     }
 
+    // Require acceptance of terms/privacy
+    if (!acceptTerms) {
+      setError(
+        "Please accept the Terms of Service and Privacy Policy to continue."
+      );
+      setLoading(false);
+      return;
+    }
+
     const passwordError = validatePassword(password);
     if (passwordError) {
       setError(passwordError);
@@ -233,6 +244,7 @@ export function LoginForm({
     });
     setError(null);
     setSuccess(null);
+    setAcceptTerms(false);
   };
 
   const switchMode = (newMode: AuthMode) => {
@@ -380,6 +392,11 @@ export function LoginForm({
                     placeholder="+1 (555) 123-4567"
                   />
                 </div>
+                <p className="mt-2 text-xs text-gray-500 leading-relaxed">
+                  By providing your mobile number, you agree to receive SMS updates from Noble Lane about your quote/booking (quotes, confirmations, reminders, arrival notices). Reply STOP to unsubscribe or HELP for support. Msg&amp;data rates may apply. See our {""}
+                  <Link href="/privacy" className="text-amber-600 hover:text-amber-700 font-medium">Privacy Policy</Link> and {""}
+                  <Link href="/terms" className="text-amber-600 hover:text-amber-700 font-medium">Terms</Link>.
+                </p>
               </div>
 
               <div>
@@ -451,6 +468,16 @@ export function LoginForm({
                 )}
               </button>
             </div>
+            {mode === "signin" && (
+              <div className="mt-2 text-right">
+                <a
+                  href="/forgot-password"
+                  className="text-sm text-amber-600 hover:text-amber-700 font-medium"
+                >
+                  Forgot password?
+                </a>
+              </div>
+            )}
             {mode === "signup" && (
               <div className="mt-2">
                 <p className="text-xs text-gray-600 mb-2">
@@ -522,12 +549,31 @@ export function LoginForm({
                 </div>
               </div>
             )}
+
+          {mode === "signup" && (
+            <div className="mt-4">
+              <label className="flex items-start gap-2 text-sm text-gray-700 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={acceptTerms}
+                  onChange={(e) => setAcceptTerms(e.target.checked)}
+                  className="mt-0.5 w-4 h-4 text-amber-600 border-gray-300 rounded focus:ring-amber-500"
+                />
+                <span>
+                  I agree to Noble Lane's {""}
+                  <Link href="/terms" className="text-amber-600 hover:text-amber-700 font-medium">Terms of Service</Link>{" "}
+                  and {""}
+                  <Link href="/privacy" className="text-amber-600 hover:text-amber-700 font-medium">Privacy Policy</Link>.
+                </span>
+              </label>
+            </div>
+          )}
           </div>
 
           {/* Submit Button */}
           <Button
             type="submit"
-            disabled={loading}
+            disabled={loading || (mode === "signup" && !acceptTerms)}
             className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-semibold h-11 mt-6 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading

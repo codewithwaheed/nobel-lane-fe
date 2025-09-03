@@ -131,13 +131,24 @@ export default function Footer() {
         </div>
 
         <hr className="my-6 border-gray-600 sm:mx-auto lg:my-8" />
-        <span className="block text-sm text-gray-400 sm:text-center">
-          © 2025{" "}
-          <Link href="/" className="hover:text-yellow-400 font-semibold">
-            Nobel Lane™
-          </Link>
-          . All Rights Reserved.
-        </span>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+          <span className="block text-sm text-gray-400">
+            © 2025{" "}
+            <Link href="/" className="hover:text-yellow-400 font-semibold">
+              Nobel Lane™
+            </Link>
+            . All Rights Reserved.
+          </span>
+          <div className="flex items-center gap-4 text-sm text-gray-400">
+            <Link href="/terms" className="hover:text-yellow-400">
+              Terms of Service
+            </Link>
+            <span className="text-gray-500">|</span>
+            <Link href="/privacy" className="hover:text-yellow-400">
+              Privacy Policy
+            </Link>
+          </div>
+        </div>
       </div>
     </footer>
   );

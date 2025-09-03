@@ -560,6 +560,19 @@ export default function BookingWizard({
     }
   };
 
+  // Convert from quote flow to full booking flow while staying on this step
+  const handleConvertQuoteToBooking = (data?: Partial<BookingFormData>) => {
+    // Persist any current additional info first
+    if (data) {
+      updateBookingDataState(data);
+    }
+    // Switch flows explicitly
+    setForceQuoteFlow(false);
+    setBookingData((prev) => ({ ...prev, isQuote: false }));
+    // Stay on AdditionalInfo step in booking flow (Pickup Info)
+    setCurrentStep(3);
+  };
+
   const handlePaymentComplete = () => setCurrentStep(currentStep + 1);
 
   // Memoize the pricing status callback to prevent infinite re-renders
@@ -701,6 +714,11 @@ export default function BookingWizard({
             bookingData={bookingData}
             onSubmit={handleAdditionalInfoSubmit}
             onBack={handleBack}
+            onConvertToBooking={
+              bookingData.isQuote || forceQuoteFlow
+                ? handleConvertQuoteToBooking
+                : undefined
+            }
           />
         );
       case "Sign In":

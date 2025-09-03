@@ -300,6 +300,7 @@ async function handlePaymentSuccess(
           metadata.internationalArrivalFee,
         ),
         early_late_pickup_fee: parseFloatSafe(metadata.earlyLatePickupFee),
+        early_pickup_requested: metadata.earlyPickup === "true",
         holiday_fee: parseFloatSafe(metadata.holidayFee),
         dfw_toll_fee: parseFloatSafe(metadata.dfwTollFee),
 

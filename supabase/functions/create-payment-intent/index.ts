@@ -38,6 +38,7 @@ interface BookingData {
     };
     flightNumber?: string;
     notes?: string;
+    earlyPickup?: boolean;
     fromPlaceId?: string;
     toPlaceId?: string;
     fromLat?: number;
@@ -141,6 +142,9 @@ serve(async (req) => {
             // Additional trip information
             flightNumber: bookingData.flightNumber || "",
             specialInstructions: bookingData.notes || "",
+
+            // Early pickup request
+            earlyPickup: bookingData.earlyPickup?.toString() || "false",
 
             // Place details (if using Google Places)
             fromPlaceId: bookingData.fromPlaceId || "",

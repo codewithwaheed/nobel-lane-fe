@@ -27,6 +27,7 @@ import {
   formatPhoneInput,
 } from "@/lib/phone-validation";
 import { Separator } from "@/components/ui/separator";
+import Link from "next/link";
 
 // Helper function to format price
 const formatPrice = (price: number): string => {
@@ -136,6 +137,7 @@ interface AdditionalInfoProps {
   bookingData: BookingFormData;
   onSubmit: (data: Partial<BookingFormData>) => void;
   onBack: () => void;
+  onConvertToBooking?: (data: Partial<BookingFormData>) => void; // Convert quote → booking with current form data
 }
 
 export default function AdditionalInfo({
@@ -143,6 +145,7 @@ export default function AdditionalInfo({
   bookingData,
   onSubmit,
   onBack,
+  onConvertToBooking,
 }: AdditionalInfoProps) {
   const [formData, setFormData] = useState({
     flightNumber: bookingData.flightNumber || "",
@@ -151,6 +154,7 @@ export default function AdditionalInfo({
     email: bookingData.email || "",
     extraStopsRequired: bookingData.extraStopsRequired || false,
     extraStopsCount: bookingData.extraStopsCount || 0,
+    earlyPickup: bookingData.earlyPickup || false,
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -176,18 +180,17 @@ export default function AdditionalInfo({
     }
   };
 
-  const validateForm = () => {
+  // Pure validator to avoid state changes during render
+  const computeValidationErrors = (fd: typeof formData) => {
     const newErrors: Record<string, string> = {};
-
     if (isQuote) {
-      // For quotes, require contact information
-      if (!formData.phone && !formData.email) {
+      if (!fd.phone && !fd.email) {
         newErrors.contact =
           "Please provide either a phone number or email address";
       }
 
-      if (formData.phone) {
-        const phoneValidation = validateUSPhoneNumber(formData.phone);
+      if (fd.phone) {
+        const phoneValidation = validateUSPhoneNumber(fd.phone);
         if (!phoneValidation.isValid) {
           newErrors.phone = "Please enter a valid phone number";
         } else if (!phoneValidation.isUSCanada) {
@@ -196,14 +199,15 @@ export default function AdditionalInfo({
         }
       }
 
-      if (
-        formData.email &&
-        !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)
-      ) {
+      if (fd.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(fd.email)) {
         newErrors.email = "Please enter a valid email address";
       }
     }
+    return newErrors;
+  };
 
+  const validateForm = () => {
+    const newErrors = computeValidationErrors(formData);
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -377,6 +381,13 @@ export default function AdditionalInfo({
     }
   };
 
+  const handleConvertToBooking = () => {
+    if (!onConvertToBooking) return;
+    // Pass current form data to parent so it can switch flows and persist data
+    const currentFormData = { ...formData } as Partial<BookingFormData>;
+    onConvertToBooking(currentFormData);
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -442,6 +453,29 @@ export default function AdditionalInfo({
                           {errors.phone}
                         </p>
                       )}
+
+                      {/* SMS consent text under phone */}
+                      <p className="mt-2 text-xs text-gray-500 leading-relaxed">
+                        By providing your mobile number, you agree to receive
+                        SMS updates from Noble Lane about your quote/booking
+                        (quotes, confirmations, reminders, arrival notices).
+                        Reply STOP to unsubscribe or HELP for support.
+                        Msg&amp;data rates may apply. See our {""}
+                        <Link
+                          href="/privacy"
+                          className="text-amber-600 hover:text-amber-700 font-medium"
+                        >
+                          Privacy Policy
+                        </Link>{" "}
+                        and {""}
+                        <Link
+                          href="/terms"
+                          className="text-amber-600 hover:text-amber-700 font-medium"
+                        >
+                          Terms
+                        </Link>
+                        .
+                      </p>
                     </div>
 
                     <div>
@@ -463,6 +497,10 @@ export default function AdditionalInfo({
                             : "focus:border-amber-500"
                         }`}
                       />
+                      <p className="text-xs text-gray-500 mt-2">
+                        We&apos;ll use this information to send your quote and
+                        coordinate your booking.
+                      </p>
                       {errors.email && (
                         <p className="text-sm text-red-500 mt-1">
                           {errors.email}
@@ -476,11 +514,6 @@ export default function AdditionalInfo({
                       {errors.contact}
                     </p>
                   )}
-
-                  <p className="text-xs text-gray-500 mt-2">
-                    We&apos;ll use this information to send your quote and
-                    coordinate your booking.
-                  </p>
                 </div>
 
                 {/* Estimated Pricing Breakdown - Only for quotes */}
@@ -507,12 +540,27 @@ export default function AdditionalInfo({
                               </span>
                             </div>
 
+                            <div className="flex justify-between">
+                              <div>
+                                <span className="text-gray-600">
+                                  Gratuity (20%)
+                                </span>
+                                <div className="text-xs text-gray-500">
+                                  100% goes to driver
+                                </div>
+                              </div>
+                              <span className="font-medium">
+                                {formatPrice(pricingData.gratuityRate)}
+                              </span>
+                            </div>
+
                             {pricingData.extrasOnly > 0 && (
                               <div className="flex justify-between">
                                 <div>
                                   <span className="text-gray-600">
                                     Additional services
                                   </span>
+
                                   <div className="text-xs text-gray-500">
                                     {[
                                       pricingData.extras.internationalArrival >
@@ -551,20 +599,6 @@ export default function AdditionalInfo({
                                 </span>
                               </div>
                             )}
-
-                            <div className="flex justify-between">
-                              <div>
-                                <span className="text-gray-600">
-                                  Gratuity (20%)
-                                </span>
-                                <div className="text-xs text-gray-500">
-                                  100% goes to driver
-                                </div>
-                              </div>
-                              <span className="font-medium">
-                                {formatPrice(pricingData.gratuityRate)}
-                              </span>
-                            </div>
 
                             <Separator />
 
@@ -782,6 +816,40 @@ export default function AdditionalInfo({
                   </div>
                 </div>
 
+                {/* Early Pickups */}
+                <div className="lg:col-span-2 border-t border-gray-100 pt-6">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Plus className="w-5 h-5 text-amber-500" />
+                    <h3 className="text-lg font-semibold text-gray-900">
+                      Early Pickups
+                    </h3>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div className="flex items-center space-x-3">
+                      <input
+                        type="checkbox"
+                        id="earlyPickup"
+                        checked={formData.earlyPickup}
+                        onChange={(e) =>
+                          handleChange("earlyPickup", e.target.checked)
+                        }
+                        className="w-4 h-4 text-amber-500 bg-gray-100 border-gray-300 rounded focus:ring-amber-500 focus:ring-2"
+                      />
+                      <Label
+                        htmlFor="earlyPickup"
+                        className="text-sm font-medium text-gray-700"
+                      >
+                        Early pickup requested
+                      </Label>
+                    </div>
+                    <p className="text-xs text-gray-500 ml-7">
+                      Check this if your pickup time is earlier than standard
+                      hours
+                    </p>
+                  </div>
+                </div>
+
                 {/* Special Requests */}
                 <div>
                   <div className="flex items-center gap-2 mb-4">
@@ -826,35 +894,92 @@ export default function AdditionalInfo({
           </div>
         )}
 
-        {/* Action Buttons - Consistent with VehicleSelection */}
-        <div className="flex flex-col sm:flex-row gap-4 sm:justify-between pt-6">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={onBack}
-            className="flex items-center justify-center gap-2 h-12 text-sm sm:text-base font-medium"
-          >
-            <ChevronLeft className="h-4 w-4" />
-            Previous Step
-          </Button>
+        {/* Action Buttons - Unified row with responsive layout */}
+        <div className="pt-6">
+          {isQuote && onConvertToBooking ? (
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              {/* Left: Previous */}
+              <div className="flex items-center gap-3">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={onBack}
+                  className="flex items-center justify-center gap-2 h-12 text-sm sm:text-base font-medium"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                  Previous Step
+                </Button>
+                <Separator
+                  orientation="vertical"
+                  className="hidden sm:block h-6"
+                />
+              </div>
 
-          <Button
-            type="submit"
-            disabled={isCreatingQuote}
-            className="flex items-center justify-center gap-2 h-12 text-sm sm:text-base font-medium bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {isCreatingQuote ? (
-              <>
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                Creating Quote...
-              </>
-            ) : (
-              <>
-                {isQuote ? "Request Quote" : "Continue"}
-                <ChevronRight className="h-4 w-4" />
-              </>
-            )}
-          </Button>
+              {/* Right: Quote + Proceed */}
+              <div className="flex flex-col sm:flex-row gap-3 sm:justify-end sm:flex-1">
+                <Button
+                  type="submit"
+                  disabled={isCreatingQuote}
+                  variant="outline"
+                  className="flex items-center justify-center gap-2 h-12 text-sm sm:text-base font-medium border-2 border-amber-500 text-amber-700 hover:bg-amber-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isCreatingQuote ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
+                      Creating Quote...
+                    </>
+                  ) : (
+                    <>
+                      Request Quote
+                      <ChevronRight className="h-4 w-4" />
+                    </>
+                  )}
+                </Button>
+
+                <Button
+                  type="button"
+                  onClick={handleConvertToBooking}
+                  disabled={isCreatingQuote}
+                  className="flex items-center justify-center gap-2 h-12 text-sm sm:text-base font-medium bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Proceed to Booking
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+
+              {/* Mobile-only separator between rows */}
+              <Separator className="sm:hidden my-2" />
+            </div>
+          ) : (
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={onBack}
+                className="flex items-center justify-center gap-2 h-12 text-sm sm:text-base font-medium"
+              >
+                <ChevronLeft className="h-4 w-4" />
+                Previous Step
+              </Button>
+              <Button
+                type="submit"
+                disabled={isCreatingQuote}
+                className="flex items-center justify-center gap-2 h-12 text-sm sm:text-base font-medium bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isCreatingQuote ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    Creating Quote...
+                  </>
+                ) : (
+                  <>
+                    {isQuote ? "Request Quote" : "Continue"}
+                    <ChevronRight className="h-4 w-4" />
+                  </>
+                )}
+              </Button>
+            </div>
+          )}
         </div>
       </form>
 

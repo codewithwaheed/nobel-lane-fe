@@ -37,6 +37,9 @@ export interface BookingFormData {
   extraStopsRequired?: boolean;
   extraStopsCount?: number;
 
+  // Early pickup
+  earlyPickup?: boolean;
+
   // Place details (optional, set when using autocomplete)
   fromPlaceId?: string;
   toPlaceId?: string;

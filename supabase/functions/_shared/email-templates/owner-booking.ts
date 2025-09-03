@@ -17,6 +17,7 @@ export interface OwnerBookingData {
   duration?: string;
   flightNumber?: string;
   specialRequests?: string;
+  earlyPickupRequested?: boolean;
   paymentMethod?: string;
   pickupZipcode?: string;
   dropoffZipcode?: string;
@@ -121,6 +122,11 @@ export function generateOwnerBookingHTML(data: OwnerBookingData): string {
       : ""
   }
                 ${
+    data.earlyPickupRequested
+      ? `<tr><th>Early Pickup:</th><td style="background: #fef3c7; padding: 8px; border-radius: 4px;"><strong>⏰ EARLY PICKUP REQUESTED</strong> - Customer specifically requested early pickup service</td></tr>`
+      : ""
+  }
+                ${
     data.specialRequests
       ? `<tr><th>Special Requests:</th><td style="background: #fef3c7; padding: 8px; border-radius: 4px;"><strong>${data.specialRequests}</strong></td></tr>`
       : ""
@@ -154,27 +160,7 @@ export function generateOwnerBookingHTML(data: OwnerBookingData): string {
                 <tr><th>Confirmation:</th><td><strong>#${data.confirmationNumber}</strong></td></tr>
             </table>
         </div>
-        
-        <div class="action-items">
-            <h4>📋 Critical Next Steps:</h4>
-            <ol>
-                <li><strong>Driver Assignment:</strong> Assign qualified driver immediately</li>
-                <li><strong>Dispatch System:</strong> Enter into scheduling system</li>
-                <li><strong>Customer Communication:</strong> Send driver details 24 hours before pickup</li>
-                <li><strong>Vehicle Preparation:</strong> Ensure ${data.vehicleName} is ready and clean</li>
-                <li><strong>Route Planning:</strong> Plan optimal route and check traffic</li>
-                ${
-    data.flightNumber
-      ? "<li><strong>Flight Monitoring:</strong> Set up automated flight tracking</li>"
-      : ""
-  }
-                ${
-    data.specialRequests
-      ? "<li><strong>Special Accommodations:</strong> Prepare for special requests noted above</li>"
-      : ""
-  }
-            </ol>
-        </div>
+
         
         <p style="color: #059669; font-weight: bold; font-size: 18px;">
             🎯 BOOKING CONFIRMED - Customer paid and expecting service!
@@ -234,6 +220,11 @@ Vehicle Assigned: ${data.vehicleName}
 ${
     data.flightNumber
       ? `Flight Number: ${data.flightNumber} (Set up monitoring)`
+      : ""
+  }
+${
+    data.earlyPickupRequested
+      ? `⏰ EARLY PICKUP REQUESTED - Customer specifically requested early pickup service`
       : ""
   }
 ${data.specialRequests ? `Special Requests: ${data.specialRequests}` : ""}

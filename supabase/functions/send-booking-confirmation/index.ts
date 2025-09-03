@@ -195,6 +195,39 @@ serve(async (req) => {
     let enhancedVehicleName = vehicleName;
     let enhancedPricingBreakdown = pricingBreakdown;
     let enhancedTotalAmount = totalAmount;
+    let earlyPickupRequested = false;
+
+    // For bookings, get additional information from database if bookingId is provided
+    if (notificationType === "booking" && requestData.bookingId) {
+      try {
+        console.log(
+          `🔍 DEBUGGING: Attempting to fetch booking data for ID: ${requestData.bookingId}`,
+        );
+        const { data: bookingData, error } = await supabaseClient
+          .from("bookings")
+          .select(
+            "vehicle_name, total_amount, early_pickup_requested, flight_number, special_instructions",
+          )
+          .eq("id", requestData.bookingId)
+          .single();
+
+        console.log(`🔍 DEBUGGING: Booking database query result:`, {
+          bookingData,
+          error,
+        });
+
+        if (bookingData && !error) {
+          console.log("📋 Enhanced booking data from database:", bookingData);
+          enhancedVehicleName = bookingData.vehicle_name || vehicleName;
+          enhancedTotalAmount = bookingData.total_amount || totalAmount;
+          earlyPickupRequested = bookingData.early_pickup_requested || false;
+        } else {
+          console.warn("⚠️ Failed to fetch booking data from database:", error);
+        }
+      } catch (bookingError) {
+        console.error("❌ Error fetching booking data:", bookingError);
+      }
+    }
 
     if (notificationType === "quote" && requestData.quoteId) {
       try {
@@ -433,6 +466,7 @@ serve(async (req) => {
           paymentMethod: "Credit Card",
           paymentIntentId: requestData.bookingId || "N/A",
           bookingSubmittedAt: new Date().toISOString(),
+          earlyPickupRequested: earlyPickupRequested,
         };
 
         ownerEmailHTML = generateOwnerBookingHTML(ownerBookingData);
@@ -589,10 +623,58 @@ serve(async (req) => {
           if (!accountSid || !authToken) {
             console.log("⚠️ Twilio credentials not configured, skipping SMS");
           } else {
-            const smsContent = notificationType === "booking"
-              ? `✅ Booking confirmed! Your reservation ${referenceNumber} has been confirmed. We'll contact you soon with driver details. - Noble Lane Transportation`
-              : `📋 Quote request received! We've received your quote request ${referenceNumber}. Our team will send you a detailed quote within 30 minutes. - Noble Lane Transportation`;
+            // Build customer-facing SMS content per template
+            const siteUrl = Deno.env.get("PUBLIC_SITE_URL") ||
+              Deno.env.get("NEXT_PUBLIC_SITE_URL") ||
+              "https://www.gonoblelane.com";
 
+            let smsContent = "";
+            if (notificationType === "booking") {
+              // Example: Your Noble Lane Booking is confirmed: Black SUV pickup at DFW Airport on 9/22/25 at 3:15 pm. Driver details will be sent prior to pickup. Thanks for choosing Noble Lane Transportation.
+              const vName = (enhancedVehicleName || vehicleName || "").trim() ||
+                "Vehicle";
+              const where = (pickupAddress || "").trim();
+              const when = `${pickupDate} at ${pickupTime}`.trim();
+              smsContent =
+                `Your Noble Lane Booking is confirmed: ${vName} pickup at ${where} on ${when}. Driver details will be sent prior to pickup. Thanks for choosing Noble Lane Transportation.`;
+            } else {
+              // Quote SMS template with pricing breakdown and conversion link
+              // Example: Here is your Quote: SUV from DFW Airport to the Crescent Hotel on 9/22/25 at 3:15 pm, $149. + Gratuity of $30. + Airport Toll $4.43 = $183.43 Total
+              // Want to proccede with booking: {url}
+              const vName = (enhancedVehicleName || vehicleName || "").trim() ||
+                "Vehicle";
+              const from = (pickupAddress || "").trim();
+              const toAddr = (destinationAddress || "").trim();
+              const when = `${pickupDate} at ${pickupTime}`.trim();
+
+              const pb = enhancedPricingBreakdown || pricingBreakdown;
+              const currency = (n: number | undefined) =>
+                typeof n === "number" && !Number.isNaN(n)
+                  ? `$${n.toFixed(2)}`
+                  : "$0.00";
+              const base = currency(pb?.baseRate ?? enhancedTotalAmount);
+              const gratuityAmt = pb?.gratuity ?? 0;
+              // Try to find an airport toll in additional fees
+              const tollItem = (pb?.additionalFees || []).find((f) =>
+                (f.name || "").toLowerCase().includes("toll")
+              );
+              const toll = tollItem ? currency(tollItem.amount) : undefined;
+              const total = currency(
+                enhancedTotalAmount ?? pb?.totalAmount ?? 0,
+              );
+
+              const gratuityText = `+ Gratuity of ${currency(gratuityAmt)}`;
+              const tollText = toll ? ` + Airport Toll ${toll}` : "";
+
+              // Use the human-friendly quote number (referenceNumber) in the URL,
+              // which our get-quote-details function accepts as `quoteId` param.
+              const convertLink = `${siteUrl}/book-now?quoteId=${referenceNumber}`;
+
+              smsContent = `Here is your Quote: ${vName} from ${from}${
+                toAddr ? ` to ${toAddr}` : ""
+              } on ${when}, ${base}. ${gratuityText}.${tollText} = ${total} Total\nWant to proceed with booking: ${convertLink}`;
+            }
+            console.log("📱 SMS content:", smsContent);
             const params = new URLSearchParams({ To: to, Body: smsContent });
             if (messagingServiceSid) {
               params.set("MessagingServiceSid", messagingServiceSid);
