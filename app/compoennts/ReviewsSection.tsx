@@ -2,7 +2,6 @@
 
 import React, { Fragment } from "react";
 import { Star } from "lucide-react";
-import Image from "next/image";
 import { cn } from "@/lib/utils";
 
 interface TestimonialItem {
@@ -79,7 +78,7 @@ interface TestimonialItemProps {
 }
 
 const TestimonialItemComponent: React.FC<TestimonialItemProps> = ({ item }) => {
-  const { rating, content, photo, name } = item;
+  const { rating, content, name } = item;
   return (
     <div className="bg-white dark:bg-slate-800 shadow-xl rounded-xl hover:-translate-y-1 h-full duration-300 p-6">
       <div className="mt-4">

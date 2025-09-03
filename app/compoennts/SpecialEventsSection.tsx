@@ -1,5 +1,5 @@
 import React from "react";
-import { Calendar, Trophy, Plane, Sparkles, MapPin, Clock } from "lucide-react";
+import { Trophy, Plane, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const specialEventsData = [

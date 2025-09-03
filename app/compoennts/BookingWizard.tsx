@@ -16,7 +16,7 @@ import VehicleSelection from "./VehicleSelection";
 import AdditionalInfo from "./AdditionalInfo";
 import Payment from "./Payment";
 import Confirmation from "./Confirmation";
-import { getBookingData, clearBookingData } from "@/lib/booking-storage";
+import { clearBookingData } from "@/lib/booking-storage";
 import type { BookingFormData, VehicleOption } from "@/lib/booking-storage";
 import { createClient } from "@/utils/supabase/client";
 import type { User } from "@supabase/supabase-js";

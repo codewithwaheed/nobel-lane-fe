@@ -560,7 +560,7 @@ export function LoginForm({
                   className="mt-0.5 w-4 h-4 text-amber-600 border-gray-300 rounded focus:ring-amber-500"
                 />
                 <span>
-                  I agree to Noble Lane's {""}
+                  I agree to Noble Lane&apos;s {""}
                   <Link href="/terms" className="text-amber-600 hover:text-amber-700 font-medium">Terms of Service</Link>{" "}
                   and {""}
                   <Link href="/privacy" className="text-amber-600 hover:text-amber-700 font-medium">Privacy Policy</Link>.

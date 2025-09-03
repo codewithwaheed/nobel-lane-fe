@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { createClient } from "@/utils/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -12,7 +12,6 @@ import { Lock, CheckCircle, ChevronLeft } from "lucide-react";
 export default function ResetPasswordPage() {
   const supabase = createClient();
   const router = useRouter();
-  const search = useSearchParams();
 
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
@@ -184,4 +183,3 @@ export default function ResetPasswordPage() {
     </div>
   );
 }
-
